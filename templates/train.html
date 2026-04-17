@@ -102,9 +102,10 @@
             <table class="table table-bordered text-center" style="max-width: 400px;">
               <tbody>
                 {% for row in classification_results.confusion_matrix %}
+                {% set outer_loop = loop %}
                 <tr>
                   {% for val in row %}
-                  <td class="fw-bold {% if loop.index0 == loop.parent.index0 %}table-primary{% endif %}">{{ val }}</td>
+                  <td class="fw-bold {% if loop.index0 == outer_loop.index0 %}table-primary{% endif %}">{{ val }}</td>
                   {% endfor %}
                 </tr>
                 {% endfor %}
