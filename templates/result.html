@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Hasil Prediksi - SleepSense{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="text-center mb-4">
+    <h2 class="fw-bold mb-2" data-aos="fade-down">📊 Hasil Analisis Prediksi</h2>
+    <p class="text-muted" data-aos="fade-up">Hasil prediksi gangguan tidur dan tingkat stres menggunakan XGBoost</p>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-md-10">
+      
+      <!-- Main Result Card - Sleep Disorder -->
+      {% if results.sleep_disorder %}
+      <div class="card border-0 shadow mb-4" data-aos="fade-up">
+        {% if results.sleep_disorder == "Insomnia" %}
+          <div class="card-header text-white py-4" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+        {% elif results.sleep_disorder == "Sleep Apnea" %}
+          <div class="card-header text-white py-4" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+        {% else %}
+          <div class="card-header text-white py-4" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">
+        {% endif %}
+          <div class="text-center">
+            <h3 class="mb-2">
+              {% if results.sleep_disorder == "Insomnia" %}
+                😫 Insomnia Terdeteksi
+              {% elif results.sleep_disorder == "Sleep Apnea" %}
+                😴 Sleep Apnea Terindikasi
+              {% else %}
+                ✅ Tidak Ada Gangguan Tidur
+              {% endif %}
+            </h3>
+            <p class="mb-0 opacity-90">Prediksi Gangguan Tidur: <strong>{{ results.sleep_disorder }}</strong></p>
+          </div>
+        </div>
+
+        <div class="card-body p-4">
+          <div class="text-center mb-4 py-3">
+            {% if results.sleep_disorder == "Insomnia" %}
+              <div class="display-1 mb-3">😫</div>
+              <h4 class="text-warning mb-3">Pola Insomnia Terdeteksi</h4>
+              <p class="text-muted lead">
+                Pola tidur Anda menunjukkan kesulitan untuk tertidur atau mempertahankan tidur. Kondisi ini dapat memengaruhi fungsi harian dan kesehatan secara keseluruhan.
+              </p>
+            {% elif results.sleep_disorder == "Sleep Apnea" %}
+              <div class="display-1 mb-3">😴</div>
+              <h4 class="text-danger mb-3">Risiko Sleep Apnea Teridentifikasi</h4>
+              <p class="text-muted lead">
+                Profil Anda menunjukkan potensi gangguan pernapasan selama tidur. Kondisi ini memerlukan perhatian medis karena dapat memengaruhi kadar oksigen.
+              </p>
+            {% else %}
+              <div class="display-1 mb-3">✅</div>
+              <h4 class="text-success mb-3">Profil Tidur Sehat</h4>
+              <p class="text-muted lead">
+                Tidak ada gangguan tidur signifikan yang terdeteksi. Kesehatan tidur Anda tampak dalam kondisi baik. Pertahankan kebiasaan sehat!
+              </p>
+            {% endif %}
+          </div>
+
+          <hr class="my-4">
+
+          <!-- What This Means -->
+          <div class="mb-4">
+            <h5 class="fw-bold mb-3">📖 Apa Artinya</h5>
+            {% if results.sleep_disorder == "Insomnia" %}
+              <div class="alert alert-warning border-0 shadow-sm">
+                <h6 class="fw-bold mb-2">Tentang Insomnia:</h6>
+                <p class="mb-2">
+                  Insomnia ditandai dengan kesulitan persisten untuk tertidur, mempertahankan tidur, atau bangun terlalu awal.
+                  Dapat disebabkan oleh stres, kebiasaan tidur buruk, obat-obatan, atau kondisi kesehatan yang mendasari.
+                </p>
+                <p class="mb-0">
+                  <strong>Dampak:</strong> Dapat menyebabkan kelelahan di siang hari, perubahan suasana hati, kesulitan berkonsentrasi, dan penurunan kualitas hidup.
+                </p>
+              </div>
+            {% elif results.sleep_disorder == "Sleep Apnea" %}
+              <div class="alert alert-danger border-0 shadow-sm">
+                <h6 class="fw-bold mb-2">Tentang Sleep Apnea:</h6>
+                <p class="mb-2">
+                  Sleep apnea melibatkan gangguan pernapasan berulang selama tidur. Tipe yang paling umum (obstructive sleep apnea)
+                  terjadi ketika otot tenggorokan rileks dan menghalangi jalan napas.
+                </p>
+                <p class="mb-0">
+                  <strong>Dampak:</strong> Dapat menyebabkan mendengkur keras, terengah-engah, kantuk di siang hari, dan meningkatkan risiko masalah jantung.
+                </p>
+              </div>
+            {% else %}
+              <div class="alert alert-success border-0 shadow-sm">
+                <h6 class="fw-bold mb-2">Tidur Sehat:</h6>
+                <p class="mb-2">
+                  Pola tidur dan metrik kesehatan Anda tidak menunjukkan gangguan tidur mayor. Ini menandakan kualitas tidur
+                  dan kebiasaan gaya hidup sehat yang mendukung istirahat berkualitas.
+                </p>
+                <p class="mb-0">
+                  <strong>Manfaat:</strong> Tidur berkualitas mendukung fungsi imun, kesehatan mental, performa kognitif, dan kesejahteraan secara keseluruhan.
+                </p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Stress Level & Sleep Quality Cards -->
+      <div class="row mb-4" data-aos="fade-up" data-aos-delay="100">
+        {% if results.stress_level %}
+        <div class="col-md-6 mb-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center p-4">
+              <h5 class="fw-bold mb-3"><i class="bi bi-activity me-2"></i>Tingkat Stres</h5>
+              {% if results.stress_level >= 7 %}
+                <div class="stress-meter stress-high">
+              {% elif results.stress_level >= 5 %}
+                <div class="stress-meter stress-medium">
+              {% else %}
+                <div class="stress-meter stress-low">
+              {% endif %}
+                <span class="stress-value">{{ "%.1f"|format(results.stress_level) }}</span>
+                <span class="stress-scale">/10</span>
+              </div>
+              <p class="mt-3 text-muted">
+                {% if results.stress_level >= 7 %}
+                  <span class="badge bg-danger">Tingkat Stres Tinggi</span>
+                {% elif results.stress_level >= 5 %}
+                  <span class="badge bg-warning text-dark">Tingkat Stres Sedang</span>
+                {% else %}
+                  <span class="badge bg-success">Tingkat Stres Rendah</span>
+                {% endif %}
+              </p>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if results.sleep_quality_percentage is not none %}
+        <div class="col-md-6 mb-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center p-4">
+              <h5 class="fw-bold mb-3"><i class="bi bi-moon-stars me-2"></i>Kualitas Tidur</h5>
+              {% if results.sleep_quality_percentage >= 70 %}
+                <div class="quality-meter quality-good">
+              {% elif results.sleep_quality_percentage >= 50 %}
+                <div class="quality-meter quality-fair">
+              {% else %}
+                <div class="quality-meter quality-poor">
+              {% endif %}
+                <span class="quality-value">{{ "%.1f"|format(results.sleep_quality_percentage) }}</span>
+                <span class="quality-scale">%</span>
+              </div>
+              <p class="mt-3 text-muted">
+                {% if results.sleep_quality_percentage >= 70 %}
+                  <span class="badge bg-success">Kualitas Baik</span>
+                {% elif results.sleep_quality_percentage >= 50 %}
+                  <span class="badge bg-warning text-dark">Kualitas Cukup</span>
+                {% else %}
+                  <span class="badge bg-danger">Kualitas Buruk</span>
+                {% endif %}
+              </p>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Disorder Probabilities -->
+      {% if results.disorder_probabilities %}
+      <div class="card border-0 shadow-sm mb-4" data-aos="fade-up" data-aos-delay="150">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3"><i class="bi bi-pie-chart me-2"></i>Probabilitas Gangguan Tidur</h5>
+          {% for disorder, prob in results.disorder_probabilities.items() %}
+          <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span class="fw-semibold">{{ disorder }}</span>
+              <span class="fw-bold">{{ "%.1f"|format(prob * 100) }}%</span>
+            </div>
+            <div class="progress" style="height: 12px; border-radius: 6px;">
+              {% if disorder == results.sleep_disorder %}
+              <div class="progress-bar bg-primary" role="progressbar" style="width: {{ prob * 100 }}%; border-radius: 6px;" aria-valuenow="{{ prob * 100 }}" aria-valuemin="0" aria-valuemax="100"></div>
+              {% else %}
+              <div class="progress-bar bg-secondary" role="progressbar" style="width: {{ prob * 100 }}%; border-radius: 6px; opacity: 0.5;" aria-valuenow="{{ prob * 100 }}" aria-valuemin="0" aria-valuemax="100"></div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Recommendations Card -->
+      {% if results.recommendations %}
+      <div class="card border-0 shadow-sm mb-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);">
+          <h5 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Rekomendasi Kesehatan</h5>
+        </div>
+        <div class="card-body p-4">
+          <div class="row">
+            {% for rec in results.recommendations %}
+            <div class="col-md-6 mb-2">
+              <div class="recommendation-item p-3 rounded-3">
+                {{ rec }}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- When to Seek Help -->
+      {% if results.sleep_disorder and results.sleep_disorder != "None" %}
+      <div class="card border-0 shadow-sm mb-4" style="border-left: 4px solid #dc3545 !important;" data-aos="fade-up" data-aos-delay="250">
+        <div class="card-body p-4">
+          <h5 class="fw-bold text-danger mb-3">⚠️ Kapan Harus ke Dokter</h5>
+          <p class="mb-2">Konsultasikan dengan tenaga kesehatan atau dokter spesialis tidur jika Anda mengalami:</p>
+          <ul class="mb-0">
+            <li>Gejala berlangsung lebih dari 3 bulan</li>
+            <li>Dampak signifikan pada fungsi harian atau kualitas hidup</li>
+            <li>Mendengkur keras disertai tersedak atau terengah-engah (potensi sleep apnea)</li>
+            <li>Kantuk berlebihan di siang hari meskipun durasi tidur cukup</li>
+            <li>Sakit kepala atau mulut kering saat bangun tidur</li>
+          </ul>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Model Info -->
+      <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);" data-aos="fade-up" data-aos-delay="300">
+        <div class="card-body p-4">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <h6 class="fw-bold mb-2">🤖 Tentang Analisis Ini</h6>
+              <p class="mb-0 small">
+                Alat skrining ini menggunakan model <strong>XGBoost (Extreme Gradient Boosting)</strong> yang dilatih pada data kesehatan tidur.
+                XGBoost Classifier untuk klasifikasi gangguan tidur dan XGBoost Regressor untuk prediksi tingkat stres.
+                <span class="text-danger fw-bold">Ini bukan diagnosis medis.</span> Selalu konsultasikan dengan dokter spesialis untuk evaluasi yang tepat.
+              </p>
+            </div>
+            <div class="col-md-4 text-center mt-3 mt-md-0">
+              <div class="badge bg-primary px-3 py-2 fs-6">XGBoost Algorithm</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="text-center mt-4" data-aos="fade-up" data-aos-delay="350">
+        <a href="/predict" class="btn btn-primary btn-lg px-4 me-2">
+          <i class="bi bi-arrow-repeat me-2"></i>Prediksi Ulang
+        </a>
+        <a href="/train" class="btn btn-outline-primary btn-lg px-4 me-2">
+          <i class="bi bi-graph-up me-2"></i>Lihat Evaluasi
+        </a>
+        <a href="/" class="btn btn-outline-secondary btn-lg px-4">
+          <i class="bi bi-house me-2"></i>Beranda
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

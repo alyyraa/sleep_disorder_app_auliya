@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}SleepSense - Prediksi Gangguan Tidur & Tingkat Stres dengan XGBoost{% endblock %}
+
+{% block content %}
+
+<!-- Hero Section -->
+<div class="hero-section text-center py-5">
+  <div class="container">
+    <div class="hero-badge" data-aos="fade-down" data-aos-delay="0">
+      <span class="badge-pill">🧠 Powered by XGBoost Algorithm</span>
+    </div>
+    <h1 class="display-3 fw-bold mb-3" data-aos="fade-down" data-aos-delay="100">
+      Prediksi <span class="text-glow">Gangguan Tidur</span><br>& Tingkat Stres
+    </h1>
+    <p class="lead fs-4 mb-2" data-aos="fade-up" data-aos-delay="200">
+      Implementasi Algoritma XGBoost untuk Prediksi Gangguan Tidur dan Tingkat Stres Berbasis Web
+    </p>
+    <p class="mb-4 opacity-75" data-aos="fade-up" data-aos-delay="250">
+      Analisis pola tidur dan tingkat stres Anda dengan kecerdasan buatan
+    </p>
+    <div data-aos="fade-up" data-aos-delay="300">
+      <a href="/predict" class="btn btn-hero btn-lg me-2">
+        <i class="bi bi-clipboard2-pulse me-2"></i>Mulai Prediksi
+      </a>
+      <a href="#features" class="btn btn-hero-outline btn-lg">
+        <i class="bi bi-arrow-down-circle me-2"></i>Pelajari Lebih
+      </a>
+    </div>
+  </div>
+  <div class="hero-wave">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 120" preserveAspectRatio="none">
+      <path fill="#f5f7fa" d="M0,64L48,69.3C96,75,192,85,288,90.7C384,96,480,96,576,85.3C672,75,768,53,864,48C960,43,1056,53,1152,58.7C1248,64,1344,64,1392,64L1440,64L1440,120L0,120Z"></path>
+    </svg>
+  </div>
+</div>
+
+<!-- Feature Modules -->
+<div class="container py-5" id="features">
+  <div class="text-center mb-5">
+    <h2 class="fw-bold mb-3 section-title" data-aos="fade-up">Fitur Utama Aplikasi</h2>
+    <p class="text-muted fs-5" data-aos="fade-up" data-aos-delay="100">Pilih modul untuk memulai analisis kesehatan tidur Anda</p>
+  </div>
+
+  <div class="row g-4 justify-content-center">
+
+    <!-- Prediksi Gangguan Tidur -->
+    <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100">
+      <div class="card feature-card border-0 h-100 hover-card">
+        <div class="card-body text-center p-4">
+          <div class="mb-3">
+            <div class="icon-circle icon-sleep d-inline-flex align-items-center justify-content-center">
+              <i class="bi bi-moon-stars" style="font-size: 2.5rem;"></i>
+            </div>
+          </div>
+          <h5 class="card-title fw-bold mb-3">Prediksi Gangguan Tidur</h5>
+          <p class="card-text text-muted mb-4">Klasifikasi jenis gangguan tidur menggunakan XGBoost: Normal, Insomnia, atau Sleep Apnea</p>
+          <a href="/predict" class="btn btn-predict btn-lg w-100">
+            Mulai Prediksi <i class="bi bi-arrow-right ms-2"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Prediksi Tingkat Stres -->
+    <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="200">
+      <div class="card feature-card border-0 h-100 hover-card">
+        <div class="card-body text-center p-4">
+          <div class="mb-3">
+            <div class="icon-circle icon-stress d-inline-flex align-items-center justify-content-center">
+              <i class="bi bi-activity" style="font-size: 2.5rem;"></i>
+            </div>
+          </div>
+          <h5 class="card-title fw-bold mb-3">Prediksi Tingkat Stres</h5>
+          <p class="card-text text-muted mb-4">Prediksi tingkat stres (skala 1-10) menggunakan XGBoost Regressor berdasarkan data gaya hidup</p>
+          <a href="/predict" class="btn btn-stress btn-lg w-100">
+            Cek Stres <i class="bi bi-arrow-right ms-2"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Evaluasi Model -->
+    <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="300">
+      <div class="card feature-card border-0 h-100 hover-card">
+        <div class="card-body text-center p-4">
+          <div class="mb-3">
+            <div class="icon-circle icon-eval d-inline-flex align-items-center justify-content-center">
+              <i class="bi bi-graph-up-arrow" style="font-size: 2.5rem;"></i>
+            </div>
+          </div>
+          <h5 class="card-title fw-bold mb-3">Evaluasi Model</h5>
+          <p class="card-text text-muted mb-4">Lihat performa model XGBoost: Accuracy, Precision, Recall, F1, RMSE, MAE, dan R²</p>
+          <a href="/train" class="btn btn-eval btn-lg w-100">
+            Lihat Evaluasi <i class="bi bi-arrow-right ms-2"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Why XGBoost Section -->
+  <div class="row mt-5 pt-5">
+    <div class="col-12 text-center mb-5">
+      <h3 class="fw-bold fs-2 mb-2" data-aos="fade-up">Mengapa XGBoost?</h3>
+      <p class="text-muted fs-5" data-aos="fade-up" data-aos-delay="100">Keunggulan algoritma yang digunakan pada aplikasi ini</p>
+    </div>
+    <div class="col-md-4 text-center mb-4" data-aos="zoom-in" data-aos-delay="100">
+      <div class="mb-3">
+        <i class="bi bi-lightning-charge feature-icon-lg"></i>
+      </div>
+      <h5 class="fw-bold mb-2">Akurasi Tinggi</h5>
+      <p class="text-muted">XGBoost menggunakan teknik Gradient Boosting yang menghasilkan prediksi lebih akurat dibanding model tradisional</p>
+    </div>
+    <div class="col-md-4 text-center mb-4" data-aos="zoom-in" data-aos-delay="200">
+      <div class="mb-3">
+        <i class="bi bi-speedometer2 feature-icon-lg"></i>
+      </div>
+      <h5 class="fw-bold mb-2">Cepat & Efisien</h5>
+      <p class="text-muted">Optimasi komputasi paralel serta penanganan data secara efisien selama proses pelatihan dan prediksi</p>
+    </div>
+    <div class="col-md-4 text-center mb-4" data-aos="zoom-in" data-aos-delay="300">
+      <div class="mb-3">
+        <i class="bi bi-shield-check feature-icon-lg"></i>
+      </div>
+      <h5 class="fw-bold mb-2">Mencegah Overfitting</h5>
+      <p class="text-muted">Regularisasi bawaan (L1 dan L2) mencegah model terlalu menghafal data latih sehingga generalisasi lebih baik</p>
+    </div>
+  </div>
+
+  <!-- Metrics Overview -->
+  <div class="row mt-4 pt-3">
+    <div class="col-12 text-center mb-4">
+      <h3 class="fw-bold fs-2 mb-2" data-aos="fade-up">Metrik Evaluasi</h3>
+      <p class="text-muted fs-5" data-aos="fade-up" data-aos-delay="100">Evaluasi performa model menggunakan metrik standar</p>
+    </div>
+    <div class="col-md-6" data-aos="fade-right" data-aos-delay="100">
+      <div class="card metrics-info-card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+          <h5 class="fw-bold text-primary mb-3"><i class="bi bi-bullseye me-2"></i>Klasifikasi (Gangguan Tidur)</h5>
+          <ul class="list-unstyled mb-0">
+            <li class="mb-2"><strong>Accuracy</strong> — Ketepatan keseluruhan prediksi</li>
+            <li class="mb-2"><strong>Precision</strong> — Proporsi prediksi positif yang benar</li>
+            <li class="mb-2"><strong>Recall</strong> — Proporsi data positif yang terdeteksi</li>
+            <li class="mb-0"><strong>F1-Score</strong> — Rata-rata harmonik precision dan recall</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6" data-aos="fade-left" data-aos-delay="200">
+      <div class="card metrics-info-card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+          <h5 class="fw-bold text-stress mb-3"><i class="bi bi-bar-chart-line me-2"></i>Regresi (Tingkat Stres)</h5>
+          <ul class="list-unstyled mb-0">
+            <li class="mb-2"><strong>RMSE</strong> — Root Mean Squared Error, akar rata-rata kuadrat error</li>
+            <li class="mb-2"><strong>MAE</strong> — Mean Absolute Error, rata-rata error absolut</li>
+            <li class="mb-0"><strong>R²</strong> — Koefisien determinasi, tingkat kecocokan model</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

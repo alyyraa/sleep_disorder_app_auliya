@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% block title %}Evaluasi Model XGBoost - SleepSense{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="text-center mb-4">
+    <h2 class="fw-bold mb-2" data-aos="fade-down">📈 Evaluasi Model XGBoost</h2>
+    <p class="text-muted" data-aos="fade-up">Latih model dan lihat hasil metrik evaluasi performa klasifikasi dan regresi</p>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-md-10">
+
+      {% if error %}
+      <div class="alert alert-danger border-0 shadow-sm mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+      </div>
+      {% endif %}
+
+      <!-- Train Model Card -->
+      <div class="card border-0 shadow-sm mb-4" data-aos="fade-up">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: white;">
+          <h5 class="mb-0"><i class="bi bi-cpu me-2"></i>Pelatihan Model XGBoost</h5>
+        </div>
+        <div class="card-body p-4">
+          <p class="mb-3">
+            Klik tombol di bawah untuk melatih model XGBoost menggunakan dataset yang tersedia. 
+            Proses ini akan melatih <strong>XGBoost Classifier</strong> (untuk klasifikasi gangguan tidur) 
+            dan <strong>XGBoost Regressor</strong> (untuk prediksi tingkat stres).
+          </p>
+          <div class="alert alert-info border-0 shadow-sm mb-3">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Proses Pelatihan:</strong> Data akan melalui preprocessing (pembersihan, encoding, scaling), 
+            kemudian dibagi menjadi <strong>data latih (80%)</strong> dan <strong>data uji (20%)</strong> untuk melihat kinerja model.
+          </div>
+          <form method="POST" data-loading="true">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="bi bi-play-circle me-2"></i>Mulai Pelatihan Model
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {% if trained %}
+      <!-- Success Message -->
+      <div class="alert alert-success border-0 shadow-sm mb-4" data-aos="fade-up">
+        <h5 class="fw-bold mb-1"><i class="bi bi-check-circle me-2"></i>Pelatihan Berhasil!</h5>
+        <p class="mb-0">Model XGBoost telah berhasil dilatih dan disimpan. Berikut adalah hasil evaluasi performa model.</p>
+      </div>
+
+      <!-- Classification Results -->
+      {% if classification_results %}
+      <div class="card border-0 shadow-sm mb-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+          <h5 class="mb-0"><i class="bi bi-bullseye me-2"></i>Hasil Klasifikasi — Prediksi Gangguan Tidur</h5>
+        </div>
+        <div class="card-body p-4">
+          <p class="text-muted mb-4">Metrik evaluasi XGBoost Classifier untuk prediksi gangguan tidur (Normal, Insomnia, Sleep Apnea):</p>
+          
+          <!-- Metrics Cards -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-3 col-6">
+              <div class="metric-card text-center p-3 rounded-3">
+                <div class="metric-label">Accuracy</div>
+                <div class="metric-value text-primary">{{ "%.4f"|format(classification_results.accuracy) }}</div>
+                <div class="metric-percent text-muted">{{ "%.2f"|format(classification_results.accuracy * 100) }}%</div>
+              </div>
+            </div>
+            <div class="col-md-3 col-6">
+              <div class="metric-card text-center p-3 rounded-3">
+                <div class="metric-label">Precision</div>
+                <div class="metric-value text-success">{{ "%.4f"|format(classification_results.precision) }}</div>
+                <div class="metric-percent text-muted">{{ "%.2f"|format(classification_results.precision * 100) }}%</div>
+              </div>
+            </div>
+            <div class="col-md-3 col-6">
+              <div class="metric-card text-center p-3 rounded-3">
+                <div class="metric-label">Recall</div>
+                <div class="metric-value text-warning">{{ "%.4f"|format(classification_results.recall) }}</div>
+                <div class="metric-percent text-muted">{{ "%.2f"|format(classification_results.recall * 100) }}%</div>
+              </div>
+            </div>
+            <div class="col-md-3 col-6">
+              <div class="metric-card text-center p-3 rounded-3">
+                <div class="metric-label">F1-Score</div>
+                <div class="metric-value text-info">{{ "%.4f"|format(classification_results.f1_score) }}</div>
+                <div class="metric-percent text-muted">{{ "%.2f"|format(classification_results.f1_score * 100) }}%</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Classification Report -->
+          {% if classification_results.classification_report %}
+          <h6 class="fw-bold mb-2"><i class="bi bi-file-text me-2"></i>Classification Report</h6>
+          <div class="bg-dark text-light p-3 rounded-3 mb-3" style="font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; overflow-x: auto;">{{ classification_results.classification_report }}</div>
+          {% endif %}
+
+          <!-- Confusion Matrix -->
+          {% if classification_results.confusion_matrix %}
+          <h6 class="fw-bold mb-2"><i class="bi bi-grid-3x3 me-2"></i>Confusion Matrix</h6>
+          <div class="table-responsive">
+            <table class="table table-bordered text-center" style="max-width: 400px;">
+              <tbody>
+                {% for row in classification_results.confusion_matrix %}
+                <tr>
+                  {% for val in row %}
+                  <td class="fw-bold {% if loop.index0 == loop.parent.index0 %}table-primary{% endif %}">{{ val }}</td>
+                  {% endfor %}
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Regression Results -->
+      {% if regression_results %}
+      <div class="card border-0 shadow-sm mb-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+          <h5 class="mb-0"><i class="bi bi-bar-chart-line me-2"></i>Hasil Regresi — Prediksi Tingkat Stres</h5>
+        </div>
+        <div class="card-body p-4">
+          <p class="text-muted mb-4">Metrik evaluasi XGBoost Regressor untuk prediksi tingkat stres (skala 1-10):</p>
+          
+          <!-- Regression Metrics Cards -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <div class="metric-card text-center p-4 rounded-3">
+                <div class="metric-label">RMSE</div>
+                <div class="metric-value text-danger fs-3">{{ "%.4f"|format(regression_results.rmse) }}</div>
+                <div class="metric-desc text-muted small">Root Mean Squared Error</div>
+                <div class="metric-hint text-muted small mt-1">Semakin kecil semakin baik</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="metric-card text-center p-4 rounded-3">
+                <div class="metric-label">MAE</div>
+                <div class="metric-value text-warning fs-3">{{ "%.4f"|format(regression_results.mae) }}</div>
+                <div class="metric-desc text-muted small">Mean Absolute Error</div>
+                <div class="metric-hint text-muted small mt-1">Semakin kecil semakin baik</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="metric-card text-center p-4 rounded-3">
+                <div class="metric-label">R² Score</div>
+                <div class="metric-value text-success fs-3">{{ "%.4f"|format(regression_results.r2) }}</div>
+                <div class="metric-desc text-muted small">Koefisien Determinasi</div>
+                <div class="metric-hint text-muted small mt-1">Semakin mendekati 1 semakin baik</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Summary Table -->
+      {% if classification_results and regression_results %}
+      <div class="card border-0 shadow-sm mb-4" data-aos="fade-up" data-aos-delay="300">
+        <div class="card-header py-3 bg-white">
+          <h5 class="mb-0 fw-bold"><i class="bi bi-table me-2"></i>Ringkasan Hasil Evaluasi Model XGBoost</h5>
+        </div>
+        <div class="card-body p-4">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-dark">
+                <tr>
+                  <th>Tipe Prediksi</th>
+                  <th>Algoritma</th>
+                  <th>Metrik</th>
+                  <th>Nilai</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td rowspan="4" class="align-middle fw-bold">Klasifikasi<br><small class="text-muted">(Gangguan Tidur)</small></td>
+                  <td rowspan="4" class="align-middle">XGBoost Classifier</td>
+                  <td>Accuracy</td>
+                  <td class="fw-bold">{{ "%.4f"|format(classification_results.accuracy) }}</td>
+                </tr>
+                <tr>
+                  <td>Precision</td>
+                  <td class="fw-bold">{{ "%.4f"|format(classification_results.precision) }}</td>
+                </tr>
+                <tr>
+                  <td>Recall</td>
+                  <td class="fw-bold">{{ "%.4f"|format(classification_results.recall) }}</td>
+                </tr>
+                <tr>
+                  <td>F1-Score</td>
+                  <td class="fw-bold">{{ "%.4f"|format(classification_results.f1_score) }}</td>
+                </tr>
+                <tr class="table-light">
+                  <td rowspan="3" class="align-middle fw-bold">Regresi<br><small class="text-muted">(Tingkat Stres)</small></td>
+                  <td rowspan="3" class="align-middle">XGBoost Regressor</td>
+                  <td>RMSE</td>
+                  <td class="fw-bold">{{ "%.4f"|format(regression_results.rmse) }}</td>
+                </tr>
+                <tr class="table-light">
+                  <td>MAE</td>
+                  <td class="fw-bold">{{ "%.4f"|format(regression_results.mae) }}</td>
+                </tr>
+                <tr class="table-light">
+                  <td>R²</td>
+                  <td class="fw-bold">{{ "%.4f"|format(regression_results.r2) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% endif %}
+
+      <!-- Navigation -->
+      <div class="text-center mt-4">
+        <a href="/predict" class="btn btn-primary btn-lg px-4 me-2">
+          <i class="bi bi-clipboard2-pulse me-2"></i>Lakukan Prediksi
+        </a>
+        <a href="/" class="btn btn-outline-secondary btn-lg px-4">
+          <i class="bi bi-house me-2"></i>Beranda
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

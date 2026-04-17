@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Tentang - SleepSense{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="text-center mb-5">
+    <h2 class="fw-bold mb-2" data-aos="fade-down">📋 Tentang Aplikasi</h2>
+    <p class="text-muted" data-aos="fade-up">Implementasi Algoritma XGBoost untuk Prediksi Gangguan Tidur dan Tingkat Stres Berbasis Web</p>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-md-10">
+
+      <!-- About Card -->
+      <div class="card border-0 shadow-sm mb-4" data-aos="fade-up">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3"><i class="bi bi-journal-text me-2 text-primary"></i>Latar Belakang</h5>
+          <p>
+            Gangguan tidur dan tingkat stres merupakan masalah kesehatan yang semakin umum di masyarakat modern.
+            Aplikasi ini dikembangkan sebagai implementasi dari algoritma <strong>XGBoost (Extreme Gradient Boosting)</strong>
+            untuk membantu memprediksi gangguan tidur dan tingkat stres berdasarkan data gaya hidup dan kesehatan seseorang.
+          </p>
+          <p class="mb-0">
+            Proyek ini merupakan bagian dari penelitian skripsi yang bertujuan untuk menunjukkan kemampuan algoritma XGBoost
+            dalam menangani tugas klasifikasi (prediksi gangguan tidur) dan regresi (prediksi tingkat stres) secara bersamaan
+            dalam satu platform berbasis web.
+          </p>
+        </div>
+      </div>
+
+      <!-- Algorithm Card -->
+      <div class="card border-0 shadow-sm mb-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3"><i class="bi bi-cpu me-2 text-primary"></i>Algoritma XGBoost</h5>
+          <p>
+            XGBoost adalah algoritma ensemble learning berbasis <strong>Gradient Boosting</strong> yang bekerja dengan
+            membangun pohon keputusan secara berurutan. Setiap pohon berikutnya difokuskan untuk memperbaiki kesalahan
+            dari pohon sebelumnya.
+          </p>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="card bg-light border-0">
+                <div class="card-body">
+                  <h6 class="fw-bold text-primary">XGBoost Classifier</h6>
+                  <p class="small mb-0">Digunakan untuk <strong>klasifikasi gangguan tidur</strong> ke dalam 3 kategori: Normal, Insomnia, dan Sleep Apnea.</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card bg-light border-0">
+                <div class="card-body">
+                  <h6 class="fw-bold text-primary">XGBoost Regressor</h6>
+                  <p class="small mb-0">Digunakan untuk <strong>prediksi tingkat stres</strong> secara numerik pada skala 1-10 berdasarkan data input.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dataset Card -->
+      <div class="card border-0 shadow-sm mb-4" data-aos="fade-up" data-aos-delay="150">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3"><i class="bi bi-database me-2 text-primary"></i>Dataset</h5>
+          <p>
+            Dataset yang digunakan adalah <strong>Sleep Health and Lifestyle Dataset</strong> yang berisi data kesehatan
+            dan gaya hidup terkait pola tidur. Dataset mencakup fitur-fitur berikut:
+          </p>
+          <div class="table-responsive">
+            <table class="table table-hover table-sm">
+              <thead class="table-primary">
+                <tr>
+                  <th>Fitur</th>
+                  <th>Deskripsi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Age</td><td>Usia responden</td></tr>
+                <tr><td>Gender</td><td>Jenis kelamin</td></tr>
+                <tr><td>Sleep Duration</td><td>Durasi tidur (jam per malam)</td></tr>
+                <tr><td>Quality of Sleep</td><td>Kualitas tidur (skala 1-10)</td></tr>
+                <tr><td>Physical Activity Level</td><td>Tingkat aktivitas fisik (0-100)</td></tr>
+                <tr><td>BMI Category</td><td>Kategori Body Mass Index</td></tr>
+                <tr><td>Heart Rate</td><td>Detak jantung (bpm)</td></tr>
+                <tr><td>Daily Steps</td><td>Langkah harian</td></tr>
+                <tr><td>Systolic / Diastolic BP</td><td>Tekanan darah sistolik dan diastolik</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Evaluation Metrics Card -->
+      <div class="card border-0 shadow-sm mb-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3"><i class="bi bi-bar-chart me-2 text-primary"></i>Metrik Evaluasi</h5>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <h6 class="fw-bold">Klasifikasi (Gangguan Tidur)</h6>
+              <ul class="list-unstyled">
+                <li class="mb-2">📊 <strong>Accuracy</strong> — Persentase prediksi yang benar secara keseluruhan</li>
+                <li class="mb-2">🎯 <strong>Precision</strong> — Proporsi prediksi positif yang benar-benar positif</li>
+                <li class="mb-2">🔍 <strong>Recall</strong> — Proporsi data positif yang berhasil terdeteksi</li>
+                <li class="mb-0">⚖️ <strong>F1-Score</strong> — Rata-rata harmonik antara precision dan recall</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h6 class="fw-bold">Regresi (Tingkat Stres)</h6>
+              <ul class="list-unstyled">
+                <li class="mb-2">📉 <strong>RMSE</strong> — Root Mean Squared Error, semakin kecil semakin baik</li>
+                <li class="mb-2">📐 <strong>MAE</strong> — Mean Absolute Error, rata-rata kesalahan absolut</li>
+                <li class="mb-0">📈 <strong>R²</strong> — Koefisien determinasi, semakin mendekati 1 semakin baik</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tech Stack -->
+      <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: white;" data-aos="fade-up" data-aos-delay="250">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3"><i class="bi bi-stack me-2"></i>Teknologi yang Digunakan</h5>
+          <div class="row text-center g-3">
+            <div class="col-md-3 col-6">
+              <div class="tech-badge p-3 rounded-3">
+                <i class="bi bi-filetype-py fs-1 mb-2 d-block"></i>
+                <strong>Python</strong>
+                <div class="small opacity-75">Backend</div>
+              </div>
+            </div>
+            <div class="col-md-3 col-6">
+              <div class="tech-badge p-3 rounded-3">
+                <i class="bi bi-globe fs-1 mb-2 d-block"></i>
+                <strong>Flask</strong>
+                <div class="small opacity-75">Web Framework</div>
+              </div>
+            </div>
+            <div class="col-md-3 col-6">
+              <div class="tech-badge p-3 rounded-3">
+                <i class="bi bi-lightning-charge fs-1 mb-2 d-block"></i>
+                <strong>XGBoost</strong>
+                <div class="small opacity-75">ML Algorithm</div>
+              </div>
+            </div>
+            <div class="col-md-3 col-6">
+              <div class="tech-badge p-3 rounded-3">
+                <i class="bi bi-filetype-html fs-1 mb-2 d-block"></i>
+                <strong>HTML/CSS</strong>
+                <div class="small opacity-75">Frontend</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Disclaimer -->
+      <div class="card border-0 shadow-sm mb-4" style="border-left: 4px solid #ffc107 !important;" data-aos="fade-up" data-aos-delay="300">
+        <div class="card-body p-4">
+          <h6 class="fw-bold text-warning mb-2">⚠️ Disclaimer</h6>
+          <p class="mb-0 small">
+            Aplikasi ini dikembangkan untuk tujuan akademis sebagai bagian dari penelitian skripsi.
+            Hasil prediksi yang dihasilkan adalah hasil dari model machine learning dan <strong>bukan merupakan diagnosis medis</strong>.
+            Selalu konsultasikan dengan tenaga kesehatan profesional untuk evaluasi dan penanganan yang tepat.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
