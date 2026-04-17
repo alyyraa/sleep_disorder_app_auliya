@@ -16,16 +16,33 @@ def load_data(file_path):
 
 def clean_data(df):
     """
-    Clean the dataset by handling missing values and duplicates
+    Clean the dataset by handling missing values, duplicates, and feature engineering
     """
+    df = df.copy()
+    
     # Remove duplicates
     df = df.drop_duplicates()
     
     # Handle missing values
     df = df.dropna()
     
-    # Remove any potential outliers in BMI (assuming reasonable range 15-50)
-    df = df[(df['BMI Category'].notna())]
+    # Remove Person ID if exists (not a feature)
+    if 'Person ID' in df.columns:
+        df = df.drop('Person ID', axis=1)
+    
+    # Remove Occupation column (not used as prediction feature)
+    if 'Occupation' in df.columns:
+        df = df.drop('Occupation', axis=1)
+    
+    # === CRITICAL: Split 'Blood Pressure' into 'Systolic BP' and 'Diastolic BP' ===
+    if 'Blood Pressure' in df.columns:
+        bp_split = df['Blood Pressure'].str.split('/', expand=True)
+        df['Systolic BP'] = pd.to_numeric(bp_split[0], errors='coerce')
+        df['Diastolic BP'] = pd.to_numeric(bp_split[1], errors='coerce')
+        df = df.drop('Blood Pressure', axis=1)
+    
+    # Drop any rows with NaN values after conversion
+    df = df.dropna()
     
     return df
 
@@ -35,8 +52,8 @@ def encode_categorical_features(df):
     """
     df_encoded = df.copy()
     
-    # Categorical columns to encode
-    categorical_columns = ['Gender', 'Occupation', 'BMI Category', 'Sleep Disorder']
+    # Only encode columns that actually exist and are categorical
+    categorical_columns = ['Gender', 'BMI Category', 'Sleep Disorder']
     
     label_encoders = {}
     
@@ -104,7 +121,7 @@ def preprocess_pipeline(file_path):
     if df is None:
         return None
     
-    # Clean data
+    # Clean data (includes Blood Pressure splitting)
     df_clean = clean_data(df)
     
     # Encode categorical features
@@ -112,6 +129,15 @@ def preprocess_pipeline(file_path):
     
     # Prepare features and targets
     X, y_class, y_reg, feature_names = prepare_features_target(df_encoded)
+    
+    print(f"[INFO] Features used for training: {feature_names}")
+    print(f"[INFO] Total samples after cleaning: {len(X)}")
+    print(f"[INFO] Label encoders created for: {list(label_encoders.keys())}")
+    
+    if 'BMI Category' in label_encoders:
+        print(f"[INFO] BMI categories in dataset: {list(label_encoders['BMI Category'].classes_)}")
+    if 'Sleep Disorder' in label_encoders:
+        print(f"[INFO] Sleep Disorder classes: {list(label_encoders['Sleep Disorder'].classes_)}")
     
     return {
         'data': df_clean,
@@ -135,8 +161,9 @@ def prepare_input_for_prediction(input_data, label_encoders, feature_names):
         if col in df_input.columns and col != 'Sleep Disorder':  # Don't encode target
             try:
                 df_input[col] = encoder.transform(df_input[col].astype(str))
-            except ValueError:
-                # Handle unseen categories
+            except ValueError as e:
+                # Handle unseen categories - use the most common class (0) 
+                print(f"[WARNING] Unseen category in '{col}': {df_input[col].values}. Known: {list(encoder.classes_)}. Defaulting to 0.")
                 df_input[col] = 0
     
     # Select only the features used in training
