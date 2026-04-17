@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Hasil Prediksi - SleepSense{% endblock %}
+{% block title %}Hasil Prediksi - SleepStres Predictor{% endblock %}
 
 {% block content %}
 <div class="container py-5">
@@ -138,7 +138,7 @@
         <div class="col-md-6 mb-3">
           <div class="card border-0 shadow-sm h-100">
             <div class="card-body text-center p-4">
-              <h5 class="fw-bold mb-3"><i class="bi bi-moon-stars me-2"></i>Kualitas Tidur</h5>
+              <h5 class="fw-bold mb-3"><i class="bi bi-moon-stars me-2"></i>Skor Kesehatan Tidur</h5>
               {% if results.sleep_quality_percentage >= 70 %}
                 <div class="quality-meter quality-good">
               {% elif results.sleep_quality_percentage >= 50 %}

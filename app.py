@@ -35,10 +35,10 @@ def predict():
     """Prediction form and results"""
     if request.method == 'POST':
         try:
-            # Parse form data
+            # Parse form data — kolom sesuai dataset CSV (tanpa Occupation)
             input_data = {
-                'Age': int(request.form.get('age', 35)),
                 'Gender': request.form.get('gender', 'Male'),
+                'Age': int(request.form.get('age', 35)),
                 'Sleep Duration': float(request.form.get('sleep_duration', 7.5)),
                 'Quality of Sleep': int(request.form.get('quality_of_sleep', 8)),
                 'Physical Activity Level': int(request.form.get('physical_activity', 75)),
@@ -55,6 +55,9 @@ def predict():
                 return render_template('predict.html', error="Model belum dilatih! Silakan latih model terlebih dahulu di halaman Evaluasi Model.")
             
             results = pred.make_comprehensive_prediction(input_data)
+            
+            print(f"[DEBUG] User Input: {input_data}")
+            print(f"[DEBUG] Model Output: {results['sleep_disorder']}")
             
             return render_template('result.html', results=results, input_data=input_data)
             
@@ -102,3 +105,6 @@ def about():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
+# Trigger reload
+
+# Trigger reload no occ
