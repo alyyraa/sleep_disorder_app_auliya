@@ -47,13 +47,20 @@ class XGBoostPredictiveModels:
         recall = recall_score(y_test, y_pred, average='weighted', zero_division=0)
         f1 = f1_score(y_test, y_pred, average='weighted', zero_division=0)
         
+        importance_dict = {}
+        if self.feature_names is not None:
+            importance = self.classifier.feature_importances_
+            importances_sorted = sorted(zip(self.feature_names, importance), key=lambda x: x[1], reverse=True)
+            importance_dict = {k: float(v) for k, v in importances_sorted}
+            
         results = {
             'accuracy': accuracy,
             'precision': precision,
             'recall': recall,
             'f1_score': f1,
             'classification_report': classification_report(y_test, y_pred, zero_division=0),
-            'confusion_matrix': confusion_matrix(y_test, y_pred).tolist()
+            'confusion_matrix': confusion_matrix(y_test, y_pred).tolist(),
+            'feature_importance': importance_dict
         }
         
         logger.info(f"XGB Classifier Metrics -> Accuracy: {accuracy:.4f}, Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}")
@@ -77,10 +84,17 @@ class XGBoostPredictiveModels:
         mae = mean_absolute_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
         
+        importance_dict = {}
+        if self.feature_names is not None:
+            importance = self.regressor.feature_importances_
+            importances_sorted = sorted(zip(self.feature_names, importance), key=lambda x: x[1], reverse=True)
+            importance_dict = {k: float(v) for k, v in importances_sorted}
+
         results = {
             'rmse': rmse,
             'mae': mae,
-            'r2': r2
+            'r2': r2,
+            'feature_importance': importance_dict
         }
         
         logger.info(f"XGB Regressor Metrics -> RMSE: {rmse:.4f}, MAE: {mae:.4f}, R²: {r2:.4f}")

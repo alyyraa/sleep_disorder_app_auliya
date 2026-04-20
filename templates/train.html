@@ -113,6 +113,27 @@
             </table>
           </div>
           {% endif %}
+
+          <!-- Feature Importance (Classification) -->
+          {% if classification_results.feature_importance %}
+          <h6 class="fw-bold mb-3 mt-4"><i class="bi bi-star me-2"></i>Faktor Paling Berpengaruh</h6>
+          <div class="mb-2">
+            {% for feature, importance in classification_results.feature_importance.items() %}
+            {% if loop.index <= 10 %} <!-- Limit to top 10 to keep it concise -->
+            <div class="mb-3">
+              <div class="d-flex justify-content-between mb-1">
+                <span class="small fw-bold">{{ feature }}</span>
+                <span class="small text-muted">{{ "%.1f"|format(importance * 100) }}%</span>
+              </div>
+              <div class="progress" style="height: 8px;">
+                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ importance * 100 }}%" aria-valuenow="{{ importance * 100 }}" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+          </div>
+          {% endif %}
+
         </div>
       </div>
       {% endif %}
@@ -153,6 +174,27 @@
               </div>
             </div>
           </div>
+
+          <!-- Feature Importance (Regression) -->
+          {% if regression_results.feature_importance %}
+          <h6 class="fw-bold mb-3 mt-4"><i class="bi bi-star me-2"></i>Faktor Paling Berpengaruh (Feature Importance)</h6>
+          <div class="mb-2">
+            {% for feature, importance in regression_results.feature_importance.items() %}
+            {% if loop.index <= 10 %}
+            <div class="mb-3">
+              <div class="d-flex justify-content-between mb-1">
+                <span class="small fw-bold">{{ feature }}</span>
+                <span class="small text-muted">{{ "%.1f"|format(importance * 100) }}%</span>
+              </div>
+              <div class="progress" style="height: 8px;">
+                <div class="progress-bar bg-danger" role="progressbar" style="width: {{ importance * 100 }}%" aria-valuenow="{{ importance * 100 }}" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+          </div>
+          {% endif %}
+
         </div>
       </div>
       {% endif %}
