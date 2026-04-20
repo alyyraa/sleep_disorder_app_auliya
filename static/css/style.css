@@ -213,14 +213,17 @@ body {
 }
 
 .btn-hero-outline {
-  background: transparent;
+  background: rgba(26, 26, 46, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: white !important;
   font-weight: 700;
   font-size: 1.15rem;
   letter-spacing: 0.5px;
   padding: 1.1rem 2.8rem;
   border-radius: 15px;
-  border: 2px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
   transition: var(--transition);
 }
 

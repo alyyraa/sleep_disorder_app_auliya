@@ -177,7 +177,7 @@
 
           <!-- Feature Importance (Regression) -->
           {% if regression_results.feature_importance %}
-          <h6 class="fw-bold mb-3 mt-4"><i class="bi bi-star me-2"></i>Faktor Paling Berpengaruh (Feature Importance)</h6>
+          <h6 class="fw-bold mb-3 mt-4"><i class="bi bi-star me-2"></i>Faktor Paling Berpengaruh</h6>
           <div class="mb-2">
             {% for feature, importance in regression_results.feature_importance.items() %}
             {% if loop.index <= 10 %}
