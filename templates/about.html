@@ -42,7 +42,7 @@
               <div class="card bg-light border-0">
                 <div class="card-body">
                   <h6 class="fw-bold text-primary">XGBoost Classifier</h6>
-                  <p class="small mb-0">Digunakan untuk <strong>klasifikasi gangguan tidur</strong> ke dalam 3 kategori: Normal, Insomnia, dan Sleep Apnea.</p>
+                  <p class="small mb-0">Digunakan untuk <strong>klasifikasi gangguan tidur</strong> ke dalam 3 kategori: None, Insomnia, dan Sleep Apnea.</p>
                 </div>
               </div>
             </div>
@@ -75,15 +75,19 @@
                 </tr>
               </thead>
               <tbody>
+                <tr><td>Person ID</td><td>ID unik responden (bukan fitur prediksi)</td></tr>
+                <tr><td>Gender</td><td>Jenis kelamin responden</td></tr>
                 <tr><td>Age</td><td>Usia responden</td></tr>
-                <tr><td>Gender</td><td>Jenis kelamin</td></tr>
-                <tr><td>Sleep Duration</td><td>Durasi tidur (jam per malam)</td></tr>
+                <tr><td>Occupation</td><td>Pekerjaan atau profesi responden</td></tr>
+                <tr><td>Sleep Duration</td><td>Durasi tidur per malam (jam)</td></tr>
                 <tr><td>Quality of Sleep</td><td>Kualitas tidur (skala 1-10)</td></tr>
-                <tr><td>Physical Activity Level</td><td>Tingkat aktivitas fisik (0-100)</td></tr>
+                <tr><td>Physical Activity Level</td><td>Tingkat aktivitas fisik sehari-hari</td></tr>
                 <tr><td>BMI Category</td><td>Kategori Body Mass Index</td></tr>
-                <tr><td>Heart Rate</td><td>Detak jantung (bpm)</td></tr>
-                <tr><td>Daily Steps</td><td>Langkah harian</td></tr>
-                <tr><td>Systolic / Diastolic BP</td><td>Tekanan darah sistolik dan diastolik</td></tr>
+                <tr><td>Blood Pressure</td><td>Tekanan darah (format biasanya sistolik/diastolik)</td></tr>
+                <tr><td>Heart Rate</td><td>Detak jantung per menit</td></tr>
+                <tr><td>Daily Steps</td><td>Jumlah langkah harian</td></tr>
+                <tr><td>Stress Level</td><td>Tingkat stres pada skala 1-10 (target regresi)</td></tr>
+                <tr><td>Sleep Disorder</td><td>Kategori gangguan tidur: None, Insomnia, Sleep Apnea (target klasifikasi)</td></tr>
               </tbody>
             </table>
           </div>
