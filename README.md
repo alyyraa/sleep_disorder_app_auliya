@@ -1,9 +1,6 @@
-<<<<<<< HEAD
-# sleep_disorder_app_auliya
-=======
 # 😴 Sleep Disorder Diagnosis App
 
-A comprehensive Streamlit application for predicting sleep disorders and stress levels using machine learning models trained on the Sleep Disorder Diagnosis Dataset from Kaggle.
+A comprehensive Flask web application for predicting sleep disorders and stress levels using machine learning models trained with XGBoost.
 
 ## 🚀 Features
 
@@ -34,7 +31,7 @@ A comprehensive Streamlit application for predicting sleep disorders and stress 
 
 ```
 sleep_disorder_app/
-├── app.py                      # Main Streamlit application
+├── app.py                      # Main Flask web application
 ├── requirements.txt            # Python dependencies
 ├── README.md                   # Project documentation
 ├── models/
@@ -81,7 +78,7 @@ pip install -r requirements.txt
 ```
 
 **Core Dependencies:**
-- `streamlit>=1.28.0` - Web application framework
+- `Flask==3.0.0` - Web application framework
 - `pandas>=2.0.0` - Data manipulation and analysis
 - `numpy>=1.24.0` - Numerical computing
 - `scikit-learn>=1.3.0` - Machine learning library
@@ -123,10 +120,10 @@ kaggle datasets download -d mdsultanulislamovi/sleep-disorder-diagnosis-dataset 
 
 ### Step 6: Run the Application
 ```bash
-streamlit run app.py
+python app.py
 ```
 
-The app will open in your browser at `http://localhost:8501`
+The app will open in your browser at `http://localhost:5000`
 
 ## 📖 Usage Guide
 
@@ -229,11 +226,11 @@ The application now intelligently handles small datasets with robust error handl
 
 #### Core Modules
 
-**`app.py`** - Main Streamlit Application
+**`app.py`** - Main Flask Web Application
 ```python
-# Multi-page application with navigation
-# Custom CSS styling and responsive design
-# Integration of all components
+# Flask application with routing for home, prediction, training, and about pages
+# Uses templates from the templates/ folder for HTML rendering
+# Integrates training pipeline and prediction pipeline
 ```
 
 **`models/train_model.py`** - ML Training Pipeline
@@ -344,7 +341,7 @@ python --version
 pip install -r requirements.txt --upgrade
 
 # For specific missing packages:
-pip install streamlit pandas scikit-learn xgboost matplotlib seaborn plotly
+pip install -r requirements.txt
 ```
 
 #### 6. **Model Loading Issues**
@@ -365,16 +362,14 @@ top      # macOS
 head -n 100 data/your_dataset.csv > data/sample_data.csv
 ```
 
-#### 8. **Streamlit-Specific Issues**
+#### 8. **Flask-Specific Notes**
 ```bash
-# Clear Streamlit cache
-streamlit cache clear
+# Run the app locally
+python app.py
 
-# Run with specific port
-streamlit run app.py --server.port 8502
-
-# Debug mode
-streamlit run app.py --logger.level debug
+# Flask app already runs in debug mode when executed directly
+# Use the same command to start the development server
+python app.py
 ```
 
 ### Performance Optimization
@@ -433,8 +428,8 @@ Enable detailed logging for troubleshooting:
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
-# Or run with debug flag
-streamlit run app.py --logger.level debug
+# Run the Flask app
+python app.py
 ```
 
 ## 📚 API Documentation
@@ -595,8 +590,7 @@ def create_comprehensive_eda(df):
         df (pd.DataFrame): Dataset to analyze
         
     Returns:
-        None: Displays Streamlit visualizations
-    """
+            None: Displays HTML visualizations rendered by Flask templates
     
 def plot_correlation_heatmap(df):
     """Create correlation heatmap for numerical features
@@ -670,40 +664,23 @@ input_data = {
 ```bash
 # Clone repository
 git clone <repository-url>
-cd sleep_disorder_app
+cd sleep_disorder_app_auliya
 
 # Set up environment
 python -m venv venv_sleep_app
-source venv_sleep_app/bin/activate  # Linux/macOS
-# venv_sleep_app\Scripts\activate    # Windows
+# On Windows:
+venv_sleep_app\Scripts\activate
+# On macOS/Linux:
+# source venv_sleep_app/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
 
 # Run application
-streamlit run app.py
+python app.py
 ```
 
-### Production Deployment
-
-#### Option 1: Streamlit Cloud
-
-1. **Push to GitHub**:
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit"
-   git remote add origin <your-github-repo>
-   git push -u origin main
-   ```
-
-2. **Deploy on Streamlit Cloud**:
-   - Visit [share.streamlit.io](https://share.streamlit.io)
-   - Connect GitHub repository
-   - Set main file path: `app.py`
-   - Deploy automatically
-
-#### Option 2: Docker Deployment
+### Docker Deployment
 
 **Create Dockerfile**:
 ```dockerfile
@@ -716,11 +693,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-EXPOSE 8501
+EXPOSE 5000
 
-HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
-
-ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+ENTRYPOINT ["python", "app.py"]
 ```
 
 **Build and Run**:
@@ -729,63 +704,7 @@ ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.addres
 docker build -t sleep-disorder-app .
 
 # Run container
-docker run -p 8501:8501 sleep-disorder-app
-```
-
-#### Option 3: Heroku Deployment
-
-**Create Procfile**:
-```
-web: sh setup.sh && streamlit run app.py
-```
-
-**Create setup.sh**:
-```bash
-mkdir -p ~/.streamlit/
-
-echo "\n\
-[general]\n\
-email = \"your-email@domain.com\"\n\
-" > ~/.streamlit/credentials.toml
-
-echo "\n\
-[server]\n\
-headless = true\n\
-enableCORS=false\n\
-port = $PORT\n\
-" > ~/.streamlit/config.toml
-```
-
-**Deploy**:
-```bash
-heroku create your-app-name
-git push heroku main
-```
-
-#### Option 4: AWS EC2 Deployment
-
-```bash
-# Launch EC2 instance (Ubuntu 20.04)
-# SSH into instance
-ssh -i your-key.pem ubuntu@your-ec2-ip
-
-# Install dependencies
-sudo apt update
-sudo apt install python3-pip python3-venv nginx
-
-# Clone and setup application
-git clone <your-repo>
-cd sleep_disorder_app
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-
-# Run with PM2 for process management
-npm install -g pm2
-pm2 start "streamlit run app.py" --name sleep-app
-
-# Configure nginx reverse proxy
-sudo nano /etc/nginx/sites-available/sleep-app
+docker run -p 5000:5000 sleep-disorder-app
 ```
 
 ### Environment Variables
@@ -795,43 +714,14 @@ sudo nano /etc/nginx/sites-available/sleep-app
 # .env file
 KAGGLE_USERNAME=your_username
 KAGGLE_KEY=your_api_key
-STREAMLIT_SERVER_PORT=8501
-STREAMLIT_SERVER_ADDRESS=0.0.0.0
-STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+FLASK_APP=app.py
+FLASK_ENV=production
 ```
 
-### Performance Optimization for Production
-
-```python
-# Add to app.py for production
-import streamlit as st
-
-# Cache configuration
-st.set_page_config(
-    page_title="Sleep Disorder App",
-    page_icon="😴",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# Enable caching for expensive operations
-@st.cache_data
-def load_and_process_data(file_path):
-    # Cached data loading
-    pass
-
-@st.cache_resource
-def load_trained_models():
-    # Cached model loading
-    pass
-```
-
-## 📊 Dataset Information
-
-**Source**: [Sleep Disorder Diagnosis Dataset](https://www.kaggle.com/datasets/mdsultanulislamovi/sleep-disorder-diagnosis-dataset)
-
-**Features**:
-- **Demographics**: Age, Gender
+### Notes for Deployment
+- `app.py` menggunakan Flask dan berjalan pada port `5000`
+- Pastikan direktori `models/` berisi file `.joblib` setelah pelatihan
+- Jika ingin menjalankan di server, gunakan reverse proxy seperti Nginx untuk `http://localhost:5000`
 - **Sleep Metrics**: Sleep Duration, Quality of Sleep
 - **Health Indicators**: BMI Category, Heart Rate, Blood Pressure
 - **Lifestyle**: Physical Activity Level, Daily Steps
@@ -860,7 +750,7 @@ This project is open source and available under the [MIT License](LICENSE).
 ## 🙏 Acknowledgments
 
 - Dataset provided by [mdsultanulislamovi](https://www.kaggle.com/mdsultanulislamovi) on Kaggle
-- Built with [Streamlit](https://streamlit.io/)
+- Built with [Flask](https://flask.palletsprojects.com/)
 - Machine learning powered by [scikit-learn](https://scikit-learn.org/) and [XGBoost](https://xgboost.readthedocs.io/)
 
 ## 📞 Support
@@ -874,4 +764,3 @@ If you encounter any issues or have questions:
 ---
 
 **Happy Sleep Analysis! 😴💤**
->>>>>>> f139165 (Clean repo with .gitignore applied)
