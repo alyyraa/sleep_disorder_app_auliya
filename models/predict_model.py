@@ -211,7 +211,8 @@ class SleepDisorderPredictor:
             'disorder_probabilities': None,
             'stress_level': None,
             'sleep_quality_percentage': None,
-            'recommendations': []
+            'recommendations': [],
+            'feature_importance': {}
         }
         
         # Predict sleep disorder
@@ -233,7 +234,53 @@ class SleepDisorderPredictor:
             results['sleep_quality_percentage'] if results['sleep_quality_percentage'] else 70
         )
         
+        # Get feature importance
+        results['feature_importance'] = self.get_feature_importance()
+        
         return results
+
+    def get_feature_importance(self):
+        """
+        Get feature importance for both classifier and regressor models
+        """
+        importance_results = {
+            'classifier_importance': [],
+            'regressor_importance': []
+        }
+        
+        # Get classifier feature importance
+        if self.classifier is not None and self.feature_names is not None:
+            clf_importance = self.classifier.feature_importances_
+            max_clf_importance = max(clf_importance) if len(clf_importance) > 0 else 1.0
+            
+            # Create list of dictionaries for easier template access
+            for i, feature in enumerate(self.feature_names):
+                importance_results['classifier_importance'].append({
+                    'feature': feature,
+                    'score': float(clf_importance[i]),
+                    'percentage': float((clf_importance[i] / max_clf_importance) * 100)
+                })
+            
+            # Sort by importance (descending)
+            importance_results['classifier_importance'].sort(key=lambda x: x['score'], reverse=True)
+        
+        # Get regressor feature importance
+        if self.regressor is not None and self.feature_names is not None:
+            reg_importance = self.regressor.feature_importances_
+            max_reg_importance = max(reg_importance) if len(reg_importance) > 0 else 1.0
+            
+            # Create list of dictionaries for easier template access
+            for i, feature in enumerate(self.feature_names):
+                importance_results['regressor_importance'].append({
+                    'feature': feature,
+                    'score': float(reg_importance[i]),
+                    'percentage': float((reg_importance[i] / max_reg_importance) * 100)
+                })
+            
+            # Sort by importance (descending)
+            importance_results['regressor_importance'].sort(key=lambda x: x['score'], reverse=True)
+        
+        return importance_results
 
     def model_info(self):
         """

@@ -55,7 +55,7 @@
           <h5 class="mb-0"><i class="bi bi-bullseye me-2"></i>Hasil Klasifikasi — Prediksi Gangguan Tidur</h5>
         </div>
         <div class="card-body p-4">
-          <p class="text-muted mb-4">Metrik evaluasi XGBoost Classifier untuk prediksi gangguan tidur (Normal, Insomnia, Sleep Apnea):</p>
+          <p class="text-muted mb-4">Metrik evaluasi XGBoost Classifier untuk prediksi gangguan tidur (None, Insomnia, Sleep Apnea):</p>
           
           <!-- Metrics Cards -->
           <div class="row g-3 mb-4">
@@ -88,6 +88,14 @@
               </div>
             </div>
           </div>
+
+          <!-- Cross-validation Summary -->
+          {% if classification_results.cv_accuracy_mean is not none %}
+          <div class="alert alert-secondary border-0 shadow-sm mb-4">
+            <strong>Cross-validation ({{ classification_results.cv_folds }}-fold) Accuracy:</strong>
+            {{ "%.4f"|format(classification_results.cv_accuracy_mean) }} ± {{ "%.4f"|format(classification_results.cv_accuracy_std) }}
+          </div>
+          {% endif %}
 
           <!-- Classification Report -->
           {% if classification_results.classification_report %}
@@ -147,6 +155,14 @@
         <div class="card-body p-4">
           <p class="text-muted mb-4">Metrik evaluasi XGBoost Regressor untuk prediksi tingkat stres (skala 1-10):</p>
           
+          <!-- Cross-validation Summary -->
+          {% if regression_results.cv_rmse_mean is not none %}
+          <div class="alert alert-secondary border-0 shadow-sm mb-4">
+            <strong>Cross-validation ({{ regression_results.cv_folds }}-fold):</strong>
+            RMSE {{ "%.4f"|format(regression_results.cv_rmse_mean) }}, MAE {{ "%.4f"|format(regression_results.cv_mae_mean) }}, R² {{ "%.4f"|format(regression_results.cv_r2_mean) }}
+          </div>
+          {% endif %}
+
           <!-- Regression Metrics Cards -->
           <div class="row g-3 mb-4">
             <div class="col-md-4">

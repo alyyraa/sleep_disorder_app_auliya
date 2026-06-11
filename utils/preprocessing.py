@@ -55,8 +55,8 @@ def encode_categorical_features(df):
     """
     df_encoded = df.copy()
     
-    # Semua kolom kategorikal (tanpa Occupation)
-    categorical_columns = ['Gender', 'BMI Category', 'Sleep Disorder']
+    # Semua kolom kategorikal TERMASUK Occupation
+    categorical_columns = ['Gender', 'Occupation', 'BMI Category', 'Sleep Disorder']
     
     label_encoders = {}
     
@@ -73,9 +73,9 @@ def prepare_features_target(df_encoded):
     """
     Siapkan fitur dan target — fitur HARUS cocok dengan kolom dataset
     """
-    # Semua kolom fitur (tanpa Occupation)
+    # Semua kolom fitur TERMASUK Occupation
     feature_columns = [
-        'Gender', 'Age', 
+        'Gender', 'Age', 'Occupation',
         'Sleep Duration', 'Quality of Sleep',
         'Physical Activity Level',
         'BMI Category',

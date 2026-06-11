@@ -17,9 +17,35 @@ logger = logging.getLogger(__name__)
 
 class XGBoostPredictiveModels:
     def __init__(self):
-        # Hanya inisialisasi XGBoost
-        self.classifier = xgb.XGBClassifier(random_state=42, eval_metric='mlogloss')
-        self.regressor = xgb.XGBRegressor(random_state=42)
+        # Inisialisasi XGBoost dengan regularisasi L1/L2
+        # Classifier dengan regularisasi untuk mencegah overfitting
+        self.classifier = xgb.XGBClassifier(
+            random_state=42, 
+            eval_metric='mlogloss',
+            n_estimators=100,           # Jumlah trees
+            max_depth=6,                # Membatasi kedalaman tree
+            learning_rate=0.1,          # Shrinkage/Learning rate
+            subsample=0.8,              # Subsample 80% dari data (mencegah overfitting)
+            colsample_bytree=0.8,       # Random select 80% features per tree
+            reg_alpha=0.1,              # L1 Regularization
+            reg_lambda=1.0,             # L2 Regularization
+            min_child_weight=1,         # Minimum sum of instance weight
+            gamma=0.5                   # Minimum loss reduction untuk split
+        )
+        
+        # Regressor dengan regularisasi yang sama
+        self.regressor = xgb.XGBRegressor(
+            random_state=42,
+            n_estimators=100,           # Jumlah trees
+            max_depth=6,                # Membatasi kedalaman tree
+            learning_rate=0.1,          # Shrinkage/Learning rate
+            subsample=0.8,              # Subsample 80% dari data
+            colsample_bytree=0.8,       # Random select 80% features per tree
+            reg_alpha=0.1,              # L1 Regularization
+            reg_lambda=1.0,             # L2 Regularization
+            min_child_weight=1,         # Minimum sum of instance weight
+            gamma=0.5                   # Minimum loss reduction untuk split
+        )
         
         self.is_classifier_trained = False
         self.is_regressor_trained = False
@@ -30,16 +56,43 @@ class XGBoostPredictiveModels:
         
     def train_classification_model(self, X_train, X_test, y_train, y_test):
         """
-        Train XGBoost classifier for sleep disorder prediction
+        Train XGBoost classifier for sleep disorder prediction dengan Early Stopping
         """
-        logger.info("Training XGBoost Classifier...")
+        logger.info("Training XGBoost Classifier dengan Regularisasi dan Early Stopping...")
         
-        # Train
-        self.classifier.fit(X_train, y_train)
+        # Train dengan validation set untuk early stopping
+        # Split 20% dari training untuk validation
+        X_train_split, X_val, y_train_split, y_val = train_test_split(
+            X_train, y_train, test_size=0.2, random_state=42, stratify=y_train
+        )
+        
+        # Train dengan early stopping untuk mencegah overfitting
+        self.classifier.fit(
+            X_train_split, y_train_split,
+            eval_set=[(X_val, y_val)],
+            early_stopping_rounds=10,
+            verbose=False
+        )
         self.is_classifier_trained = True
+        
+        logger.info(f"Classifier Best Iteration: {self.classifier.best_iteration}")
         
         # Predictions
         y_pred = self.classifier.predict(X_test)
+        
+        # Cross-validation untuk evaluasi kuantitatif tambahan
+        cv_folds = min(5, max(2, len(y_train) // 2))
+        cv_scores = []
+        try:
+            cv_scores = cross_val_score(
+                self.classifier,
+                X_train,
+                y_train,
+                cv=cv_folds,
+                scoring='accuracy'
+            )
+        except Exception as cv_e:
+            logger.warning(f"Cross-validation classification skipped: {cv_e}")
         
         # Matriks Klasifikasi (Sesuai Permintaan)
         accuracy = accuracy_score(y_test, y_pred)
@@ -60,24 +113,73 @@ class XGBoostPredictiveModels:
             'f1_score': f1,
             'classification_report': classification_report(y_test, y_pred, zero_division=0),
             'confusion_matrix': confusion_matrix(y_test, y_pred).tolist(),
-            'feature_importance': importance_dict
+            'feature_importance': importance_dict,
+            'cv_folds': cv_folds,
+            'cv_accuracy_scores': cv_scores.tolist() if len(cv_scores) else None,
+            'cv_accuracy_mean': float(cv_scores.mean()) if len(cv_scores) else None,
+            'cv_accuracy_std': float(cv_scores.std()) if len(cv_scores) else None
         }
         
         logger.info(f"XGB Classifier Metrics -> Accuracy: {accuracy:.4f}, Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}")
+        if len(cv_scores):
+            logger.info(f"Cross-val ({cv_folds}-fold) Accuracy -> Mean: {cv_scores.mean():.4f}, Std: {cv_scores.std():.4f}")
         return results
     
     def train_regression_model(self, X_train, X_test, y_train, y_test):
         """
-        Train XGBoost regressor for stress level prediction
+        Train XGBoost regressor for stress level prediction dengan Early Stopping
         """
-        logger.info("Training XGBoost Regressor...")
+        logger.info("Training XGBoost Regressor dengan Regularisasi dan Early Stopping...")
         
-        # Train
-        self.regressor.fit(X_train, y_train)
+        # Train dengan validation set untuk early stopping
+        X_train_split, X_val, y_train_split, y_val = train_test_split(
+            X_train, y_train, test_size=0.2, random_state=42
+        )
+        
+        # Train dengan early stopping untuk mencegah overfitting
+        self.regressor.fit(
+            X_train_split, y_train_split,
+            eval_set=[(X_val, y_val)],
+            early_stopping_rounds=10,
+            verbose=False
+        )
         self.is_regressor_trained = True
+        
+        logger.info(f"Regressor Best Iteration: {self.regressor.best_iteration}")
         
         # Predictions
         y_pred = self.regressor.predict(X_test)
+        
+        # Cross-validation untuk evaluasi kuantitatif tambahan
+        cv_folds = min(5, max(2, len(y_train) // 2))
+        cv_rmse_scores = []
+        cv_mae_scores = []
+        cv_r2_scores = []
+        try:
+            neg_mse_scores = cross_val_score(
+                self.regressor,
+                X_train,
+                y_train,
+                cv=cv_folds,
+                scoring='neg_mean_squared_error'
+            )
+            cv_rmse_scores = np.sqrt(-neg_mse_scores)
+            cv_mae_scores = -cross_val_score(
+                self.regressor,
+                X_train,
+                y_train,
+                cv=cv_folds,
+                scoring='neg_mean_absolute_error'
+            )
+            cv_r2_scores = cross_val_score(
+                self.regressor,
+                X_train,
+                y_train,
+                cv=cv_folds,
+                scoring='r2'
+            )
+        except Exception as cv_e:
+            logger.warning(f"Cross-validation regression skipped: {cv_e}")
         
         # Matriks Regresi (Sesuai Permintaan)
         rmse = np.sqrt(mean_squared_error(y_test, y_pred))
@@ -94,10 +196,17 @@ class XGBoostPredictiveModels:
             'rmse': rmse,
             'mae': mae,
             'r2': r2,
-            'feature_importance': importance_dict
+            'feature_importance': importance_dict,
+            'cv_folds': cv_folds,
+            'cv_rmse_mean': float(cv_rmse_scores.mean()) if len(cv_rmse_scores) else None,
+            'cv_rmse_std': float(cv_rmse_scores.std()) if len(cv_rmse_scores) else None,
+            'cv_mae_mean': float(cv_mae_scores.mean()) if len(cv_mae_scores) else None,
+            'cv_r2_mean': float(cv_r2_scores.mean()) if len(cv_r2_scores) else None
         }
         
         logger.info(f"XGB Regressor Metrics -> RMSE: {rmse:.4f}, MAE: {mae:.4f}, R²: {r2:.4f}")
+        if len(cv_rmse_scores):
+            logger.info(f"Cross-val ({cv_folds}-fold) RMSE -> Mean: {cv_rmse_scores.mean():.4f}, Std: {cv_rmse_scores.std():.4f}")
         return results
     
     def save_models(self, models_dir='models'):

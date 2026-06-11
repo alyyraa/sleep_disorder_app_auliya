@@ -35,10 +35,11 @@ def predict():
     """Prediction form and results"""
     if request.method == 'POST':
         try:
-            # Parse form data — kolom sesuai dataset CSV (tanpa Occupation)
+            # Parse form data — kolom sesuai dataset CSV (SEKARANG TERMASUK Occupation)
             input_data = {
                 'Gender': request.form.get('gender', 'Male'),
                 'Age': int(request.form.get('age', 35)),
+                'Occupation': request.form.get('occupation', 'Engineer'),
                 'Sleep Duration': float(request.form.get('sleep_duration', 7.5)),
                 'Quality of Sleep': int(request.form.get('quality_of_sleep', 8)),
                 'Physical Activity Level': int(request.form.get('physical_activity', 75)),

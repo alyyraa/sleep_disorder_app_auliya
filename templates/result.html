@@ -208,6 +208,77 @@
       </div>
       {% endif %}
 
+      <!-- Feature Importance -->
+      {% if results.feature_importance %}
+      <div class="card border-0 shadow-sm mb-4" data-aos="fade-up" data-aos-delay="225">
+        <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+          <h5 class="mb-0"><i class="bi bi-bar-chart-line me-2"></i>Faktor Penentu Prediksi</h5>
+        </div>
+        <div class="card-body p-4">
+          <p class="text-muted mb-4">
+            Berikut adalah fitur-fitur yang paling berpengaruh dalam menentukan hasil prediksi model XGBoost.
+            Skor importance menunjukkan seberapa penting fitur tersebut dalam proses pengambilan keputusan.
+          </p>
+
+          <div class="row">
+            <!-- Sleep Disorder Feature Importance -->
+            {% if results.feature_importance.classifier_importance %}
+            <div class="col-md-6 mb-4">
+              <h6 class="fw-bold mb-3 text-primary">
+                <i class="bi bi-moon-stars me-2"></i>Faktor Gangguan Tidur
+              </h6>
+              {% for item in results.feature_importance.classifier_importance %}
+              <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                  <span class="fw-semibold">{{ item.feature.replace('_', ' ').title() }}</span>
+                  <span class="badge bg-primary">{{ "%.3f"|format(item.score) }}</span>
+                </div>
+                <div class="progress" style="height: 8px; border-radius: 4px;">
+                  <div class="progress-bar bg-primary" role="progressbar"
+                       style="width: {{ "%.1f"|format(item.percentage) }}%; border-radius: 4px;"
+                       aria-valuenow="{{ "%.3f"|format(item.score) }}" aria-valuemin="0" aria-valuemax="1"></div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Stress Level Feature Importance -->
+            {% if results.feature_importance.regressor_importance %}
+            <div class="col-md-6 mb-4">
+              <h6 class="fw-bold mb-3 text-warning">
+                <i class="bi bi-activity me-2"></i>Faktor Tingkat Stres
+              </h6>
+              {% for item in results.feature_importance.regressor_importance %}
+              <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                  <span class="fw-semibold">{{ item.feature.replace('_', ' ').title() }}</span>
+                  <span class="badge bg-warning text-dark">{{ "%.3f"|format(item.score) }}</span>
+                </div>
+                <div class="progress" style="height: 8px; border-radius: 4px;">
+                  <div class="progress-bar bg-warning" role="progressbar"
+                       style="width: {{ "%.1f"|format(item.percentage) }}%; border-radius: 4px;"
+                       aria-valuenow="{{ "%.3f"|format(item.score) }}" aria-valuemin="0" aria-valuemax="1"></div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="alert alert-info border-0 mt-4">
+            <h6 class="fw-bold mb-2"><i class="bi bi-info-circle me-2"></i>Bagaimana Cara Kerja?</h6>
+            <p class="mb-0 small">
+              XGBoost menggunakan algoritma <strong>gradient boosting</strong> yang membangun banyak decision trees.
+              Setiap fitur diberi skor importance berdasarkan seberapa sering dan seberapa signifikan fitur tersebut
+              digunakan sebagai kriteria pemisah (split) dalam decision trees. Fitur dengan skor lebih tinggi
+              berarti lebih berpengaruh dalam menentukan hasil prediksi.
+            </p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
       <!-- When to Seek Help -->
       {% if results.sleep_disorder and results.sleep_disorder != "None" %}
       <div class="card border-0 shadow-sm mb-4" style="border-left: 4px solid #dc3545 !important;" data-aos="fade-up" data-aos-delay="250">
