@@ -30,12 +30,6 @@ def pending_module(title, message):
     return render_template("system/module_pending.html", title=title, message=message)
 
 
-@system_bp.get("/reports")
-@login_required
-def reports():
-    return pending_module("Reports", "PDF and Excel reports will be implemented in Phase 5.")
-
-
 @system_bp.get("/about")
 @login_required
 def about():

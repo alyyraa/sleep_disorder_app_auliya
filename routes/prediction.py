@@ -6,7 +6,7 @@ from sqlalchemy.orm import joinedload
 
 from extensions import db
 from models.database import ModelMetadata, Patient, PredictionHistory
-from services.prediction_service import predict_patient
+from services.prediction_service import get_feature_importance, predict_patient
 from utils.timezone import jakarta_now
 
 prediction_bp = Blueprint("prediction", __name__, url_prefix="/prediction")
@@ -70,7 +70,11 @@ def detail(history_id):
         .filter_by(id=history_id)
         .first_or_404()
     )
-    return render_template("prediction/detail.html", record=record)
+    return render_template(
+        "prediction/detail.html",
+        record=record,
+        feature_importance=get_feature_importance(),
+    )
 
 
 @prediction_bp.post("/history/<int:history_id>/delete")

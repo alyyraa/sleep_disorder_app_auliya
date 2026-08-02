@@ -32,3 +32,8 @@ def predict_patient(patient):
         "Diastolic BP": patient.diastolic_bp,
     }
     return predictor.make_comprehensive_prediction(input_data)
+
+
+def get_feature_importance():
+    """Return the active models' existing feature-importance output for the result UI."""
+    return _get_predictor().get_feature_importance()

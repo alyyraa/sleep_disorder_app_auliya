@@ -12,7 +12,7 @@
 </head>
 <body class="dashboard-body">
   <aside class="app-sidebar">
-    <a class="sidebar-brand" href="{{ url_for('system.dashboard') }}"><img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Sleep Stress Predictor Auliya" class="sidebar-logo"></a>
+    <a class="sidebar-brand" href="{{ url_for('system.dashboard') }}"><img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Sleep Stress Predictor" class="sidebar-logo"></a>
     <nav class="sidebar-nav nav flex-column">
       <a class="nav-link {% if request.endpoint == 'system.dashboard' %}active{% endif %}" href="{{ url_for('system.dashboard') }}"><i class="bi bi-grid-1x2 me-2"></i>Dashboard</a>
       <div class="nav-label">Master Data</div><div class="submenu">
@@ -27,7 +27,7 @@
         <a class="nav-link" href="{{ url_for('prediction.history') }}"><i class="bi bi-clock-history me-2"></i>Prediction History</a>
       </div>
       <div class="nav-label">System</div>
-      <a class="nav-link" href="{{ url_for('system.reports') }}"><i class="bi bi-file-earmark-bar-graph me-2"></i>Reports</a>
+      <a class="nav-link" href="{{ url_for('reports.index') }}"><i class="bi bi-file-earmark-bar-graph me-2"></i>Reports</a>
       {% if current_user.role == 'Admin' %}<a class="nav-link" href="{{ url_for('users.index') }}"><i class="bi bi-person-gear me-2"></i>Users</a>{% endif %}
       <form method="post" action="{{ url_for('auth.logout') }}" class="mt-2"><button class="sidebar-logout" type="submit"><i class="bi bi-box-arrow-left me-2"></i>Logout</button></form>
     </nav>

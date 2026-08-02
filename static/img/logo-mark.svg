@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-labelledby="title desc">
+  <title id="title">Sleep Stress Predictor emblem</title>
+  <desc id="desc">A crescent moon, healthcare cross, and connected nodes representing sleep, health, and machine learning.</desc>
+  <defs>
+    <linearGradient id="blue" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#0B3A75"/>
+      <stop offset="1" stop-color="#1679C5"/>
+    </linearGradient>
+  </defs>
+  <circle cx="148" cy="148" r="142" fill="#E8F4FF"/>
+  <circle cx="148" cy="148" r="124" fill="url(#blue)"/>
+  <path d="M168 60c-54 20-81 79-61 133 15 39 50 65 91 68-26 22-60 32-95 25C36 274-10 211 2 144 14 77 82 33 150 49c8 2 14 5 18 11Z" fill="#fff"/>
+  <path d="M102 171h28v-28h36v28h28v36h-28v28h-36v-28h-28Z" fill="#69C7F5"/>
+  <g fill="none" stroke="#69C7F5" stroke-linecap="round" stroke-width="9">
+    <path d="M202 98h32l23-22"/>
+    <path d="M204 188h30l23 22"/>
+    <path d="M177 254v23l19 18"/>
+  </g>
+  <g fill="#fff" stroke="#69C7F5" stroke-width="8">
+    <circle cx="269" cy="64" r="13"/>
+    <circle cx="269" cy="222" r="13"/>
+    <circle cx="198" cy="296" r="13"/>
+  </g>
+</svg>

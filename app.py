@@ -15,6 +15,7 @@ from routes.system import system_bp
 from routes.training_dataset import training_dataset_bp
 from routes.master_data import master_data_bp
 from routes.prediction import prediction_bp
+from routes.reports import reports_bp
 from routes.users import users_bp
 from services.database_seed import seed_database
 from services.training_service import train_models_from_database
@@ -33,6 +34,7 @@ app.register_blueprint(system_bp)
 app.register_blueprint(training_dataset_bp)
 app.register_blueprint(master_data_bp)
 app.register_blueprint(prediction_bp)
+app.register_blueprint(reports_bp)
 app.register_blueprint(users_bp)
 
 
