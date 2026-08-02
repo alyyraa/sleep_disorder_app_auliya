@@ -1,16 +1,49 @@
 import sys
 import os
 from pathlib import Path
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, flash, redirect, render_template, request, url_for
+from flask_login import current_user
 
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent))
 
 from models.predict_model import SleepDisorderPredictor
-from models.train_model import train_models_pipeline
+from extensions import db, login_manager
+from models.database import ModelMetadata, TrainingDatasetRecord, User
+from routes.auth import auth_bp
+from routes.system import system_bp
+from routes.training_dataset import training_dataset_bp
+from routes.master_data import master_data_bp
+from routes.prediction import prediction_bp
+from routes.users import users_bp
+from services.database_seed import seed_database
+from services.training_service import train_models_from_database
+from utils.access import admin_required
+from utils.timezone import jakarta_now
 
 app = Flask(__name__)
-app.secret_key = 'sleep-disorder-xgboost-app-2024'
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "sleep-disorder-xgboost-app-2024")
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{Path(app.root_path) / 'sleep_disorder.db'}"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db.init_app(app)
+login_manager.init_app(app)
+app.register_blueprint(auth_bp)
+app.register_blueprint(system_bp)
+app.register_blueprint(training_dataset_bp)
+app.register_blueprint(master_data_bp)
+app.register_blueprint(prediction_bp)
+app.register_blueprint(users_bp)
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return db.session.get(User, int(user_id))
+
+
+with app.app_context():
+    db.create_all()
+    seed_database()
 
 # Global predictor instance
 predictor = None
@@ -26,13 +59,18 @@ def get_predictor():
 
 @app.route('/')
 def index():
-    """Home page"""
-    return render_template('index.html')
+    """Route visitors into the authenticated information system."""
+    if current_user.is_authenticated:
+        return redirect(url_for("system.dashboard"))
+    return redirect(url_for("auth.login"))
 
 
 @app.route('/predict', methods=['GET', 'POST'])
 def predict():
     """Prediction form and results"""
+    flash("Manual prediction is disabled. Use New Prediction after selecting a patient record.", "info")
+    return redirect(url_for("prediction.new_prediction"))
+
     if request.method == 'POST':
         try:
             # Parse form data — kolom sesuai dataset CSV (SEKARANG TERMASUK Occupation)
@@ -69,39 +107,53 @@ def predict():
 
 
 @app.route('/train', methods=['GET', 'POST'])
+@admin_required
 def train():
     """Model training and evaluation metrics page"""
     classification_results = None
     regression_results = None
     trained = False
     error = None
+    training_record_count = TrainingDatasetRecord.query.count()
+    model_metadata = db.session.get(ModelMetadata, 1)
     
     if request.method == 'POST':
         try:
-            trainer, clf_results, reg_results = train_models_pipeline("data")
-            if trainer is not None:
+            (trainer, clf_results, reg_results), training_record_count = train_models_from_database()
+            if trainer is not None and clf_results is not None and reg_results is not None:
                 classification_results = clf_results
                 regression_results = reg_results
                 trained = True
-                # Reload the predictor with newly trained models
+                current_version = model_metadata.model_version if model_metadata else "v0"
+                try:
+                    next_version = f"v{int(current_version.lstrip('v')) + 1}"
+                except ValueError:
+                    next_version = "v1"
+                if model_metadata is None:
+                    model_metadata = ModelMetadata(
+                        id=1,
+                        active_model="XGBoost Classifier and Regressor",
+                        model_version=next_version,
+                    )
+                    db.session.add(model_metadata)
+                else:
+                    model_metadata.model_version = next_version
+                model_metadata.last_training_date = jakarta_now()
+                db.session.commit()
                 global predictor
                 predictor = None
             else:
-                error = "Pelatihan model gagal! Pastikan dataset tersedia di folder data/."
+                error = "Model training did not return complete classification and regression metrics."
         except Exception as e:
-            error = f"Terjadi kesalahan saat pelatihan: {str(e)}"
+            error = f"Training failed: {str(e)}"
     
     return render_template('train.html', 
                          classification_results=classification_results,
                          regression_results=regression_results,
                          trained=trained,
-                         error=error)
-
-
-@app.route('/about')
-def about():
-    """About page"""
-    return render_template('about.html')
+                         error=error,
+                         model_metadata=model_metadata,
+                         training_record_count=training_record_count)
 
 
 if __name__ == '__main__':
