@@ -1,151 +1,201 @@
-﻿# Sleep Disorder & Stress Prediction App
+# SLEEP STRESS PREDICTOR
 
-Aplikasi web Flask yang menggunakan XGBoost untuk memprediksi gangguan tidur dan tingkat stres.
+Sistem Informasi Prediksi Gangguan Tidur dan Tingkat Stres berbasis Flask dan XGBoost. Aplikasi ini menyediakan pengelolaan data penelitian, data pasien, pelatihan model, prediksi berbasis data pasien, riwayat prediksi, serta ekspor laporan.
 
-## Ringkasan
+> Catatan: aplikasi ini dibuat untuk keperluan akademik dan skrining awal. Hasil prediksi bukan diagnosis medis dan tidak menggantikan konsultasi dengan tenaga kesehatan.
 
-Aplikasi ini menyediakan:
+## Fitur Utama
 
-- **Prediksi gangguan tidur** dengan XGBoost Classifier menjadi tiga kategori:
-  - `None`
-  - `Insomnia`
-  - `Sleep Apnea`
-- **Prediksi tingkat stres** dengan XGBoost Regressor pada skala 1-10
-- **Halaman web** untuk pelatihan model, prediksi, dan informasi dataset
+- Login, logout, dan manajemen pengguna berbasis peran Admin.
+- Dashboard analitik untuk pasien, prediksi, gangguan tidur, rata-rata stres, dan metadata model.
+- Master Data:
+  - Training Dataset (374 data penelitian awal, CSV import, tambah, ubah, hapus)
+  - Patients
+  - Occupations
+  - BMI Categories
+- Pelatihan model XGBoost dari Training Dataset yang tersimpan di SQLite.
+- Evaluasi model setelah pelatihan: Accuracy, Precision, Recall, F1 Score, Confusion Matrix, MAE, RMSE, dan R².
+- Prediksi berbasis data pasien—tanpa memasukkan fitur kesehatan secara manual pada halaman prediksi.
+- Hasil prediksi Sleep Disorder, probabilitas kelas, Stress Level, rekomendasi, feature importance, dan informasi model.
+- Prediction History dengan pencarian, pagination, detail, dan hapus.
+- Laporan Training Dataset, Patients, dan Prediction History dalam format PDF dan Excel.
 
-## Dataset
+## Teknologi
 
-File dataset utama:
+- Python dan Flask
+- Flask-SQLAlchemy + SQLite
+- Flask-Login dan Werkzeug Password Hashing
+- Bootstrap 5, Jinja2, DataTables, dan Chart.js
+- XGBoost, scikit-learn, pandas, dan joblib
+- ReportLab untuk PDF dan openpyxl untuk Excel
 
-- `data/Sleep_health_and_lifestyle_dataset.csv`
+## Alur Sistem
 
-Fitur yang dipakai dalam preprocessing dan model:
+```text
+Login
+  → Dashboard
+  → Master Data
+      → Training Dataset / Patients / Occupations / BMI Categories
+  → Machine Learning
+      → Train Model / New Prediction / Prediction History
+  → Reports
+  → Logout
+```
 
-- `Gender`
-- `Age`
-- `Occupation`
-- `Sleep Duration`
-- `Quality of Sleep`
-- `Physical Activity Level`
-- `BMI Category`
-- `Heart Rate`
-- `Daily Steps`
-- `Systolic BP`
-- `Diastolic BP`
+### Alur Prediksi
 
-Catatan:
+```text
+Pilih Patient
+  → muat data Patient dari SQLite
+  → existing preprocessing + saved artifacts
+  → XGBoost Classifier dan XGBoost Regressor
+  → Prediction Result
+  → simpan Prediction History
+```
 
-- `Person ID` dibuang saat preprocessing karena bukan fitur prediksi
-- Kolom `Blood Pressure` dipecah menjadi `Systolic BP` dan `Diastolic BP`
-- Target klasifikasi: `Sleep Disorder`
-- Target regresi: `Stress Level`
+Sleep Disorder dan Stress Level diprediksi oleh dua model XGBoost yang independen. Oleh sebab itu, kelas `None` tetap dapat memiliki prediksi tingkat stres sedang atau tinggi.
+
+## Dataset dan Fitur Model
+
+Saat inisialisasi database, aplikasi melakukan seed terhadap 374 data penelitian awal ke tabel `training_dataset_records`.
+
+Fitur model:
+
+- Gender
+- Age
+- Occupation
+- Sleep Duration
+- Quality of Sleep
+- Physical Activity Level
+- BMI Category
+- Heart Rate
+- Daily Steps
+- Systolic BP
+- Diastolic BP
+
+Target:
+
+- Klasifikasi: `Sleep Disorder` (`None`, `Insomnia`, `Sleep Apnea`)
+- Regresi: `Stress Level` (skala 1–10)
+
+`Person ID` tidak dipakai sebagai fitur model. Kolom `Blood Pressure` pada CSV penelitian dipisahkan menjadi `Systolic BP` dan `Diastolic BP` sebelum digunakan model.
 
 ## Instalasi
 
-1. Buat virtual environment:
+1. Clone repository.
+
+```powershell
+git clone https://github.com/alyyraa/sleep_disorder_app_auliya.git
+cd sleep_disorder_app_auliya
+```
+
+2. Buat dan aktifkan virtual environment.
 
 ```powershell
 python -m venv venv
-```
-
-2. Aktifkan virtual environment:
-
-```powershell
 .\venv\Scripts\Activate.ps1
 ```
 
-3. Install dependency:
+3. Install dependencies.
 
 ```powershell
 pip install -r requirements.txt
 ```
 
-## Menjalankan Aplikasi
-
-Jalankan aplikasi:
+4. Jalankan aplikasi.
 
 ```powershell
 python app.py
 ```
 
-Lalu buka browser di:
+5. Buka `http://127.0.0.1:5000` pada browser.
 
-- `http://127.0.0.1:5000`
+Database SQLite `sleep_disorder.db` akan dibuat atau digunakan secara otomatis. Pada inisialisasi pertama, data master dan Training Dataset awal akan di-seed.
 
-## Penggunaan
+## Akun Admin Awal
 
-### Halaman Utama
-- `http://127.0.0.1:5000`
-- Menampilkan landing page dan navigasi ke fitur prediksi dan pelatihan
+| Username | Password |
+|---|---|
+| `admin` | `admin123` |
 
-### Pelatihan Model
-- `http://127.0.0.1:5000/train`
-- Menjalankan pipeline pelatihan XGBoost
-- Menyimpan model dan preprocessing artifacts di folder `models/`
+Untuk penggunaan di luar lingkungan pengembangan, segera ganti password Admin dan atur environment variable `SECRET_KEY` yang aman.
 
-### Prediksi
-- `http://127.0.0.1:5000/predict`
-- Input data pengguna sesuai fitur dataset
-- Menampilkan prediksi `Sleep Disorder`, `Stress Level`, probabilitas kelas, dan rekomendasi kesehatan
+## Pelatihan Model
 
-## Arsitektur Kode
+Menu **Machine Learning → Train Model** membaca seluruh record pada Training Dataset dari SQLite, membangun format CSV penelitian sementara, lalu menjalankan pipeline pelatihan yang tersedia.
 
-### `app.py`
-- Routing Flask untuk halaman home, predict, train, dan about
-- Memuat model melalui `SleepDisorderPredictor`
+Model dan preprocessing yang digunakan tetap berada pada:
 
-### `utils/preprocessing.py`
-- Memuat dataset
-- Membersihkan data
-- Mengencode kategori
-- Menyusun fitur dan target
-- Menyiapkan input prediksi
+- `models/train_model.py`
+- `models/predict_model.py`
+- `utils/preprocessing.py`
 
-### `models/train_model.py`
-- Pipeline pelatihan XGBoost
-- Early stopping dan cross-validation
-- Menyimpan model dan artefak preprocessing
+Model artifacts aktif disimpan dalam folder `models/`, termasuk:
 
-### `models/predict_model.py`
-- Memuat model yang sudah dilatih
-- Menyiapkan input pengguna untuk prediksi
-- Memproduksi prediksi klasifikasi dan regresi
-- Menghasilkan rekomendasi kesehatan
-- Mengambil feature importance
+- `xgboost_classifier.joblib`
+- `xgboost_regressor.joblib`
+- `scaler.joblib`
+- `label_encoders.joblib`
+- `feature_names.joblib`
 
-## Struktur Folder
+## Struktur Proyek
 
-```
+```text
 .
 ├── app.py
-├── data/
-│   └── Sleep_health_and_lifestyle_dataset.csv
+├── extensions.py
 ├── models/
-│   ├── feature_names.joblib
-│   ├── label_encoders.joblib
-│   ├── scaler.joblib
-│   ├── xgboost_classifier.joblib
-│   ├── xgboost_regressor.joblib
+│   ├── database.py
+│   ├── train_model.py
 │   ├── predict_model.py
-│   └── train_model.py
-├── requirements.txt
-├── README.md
+│   └── *.joblib
+├── routes/
+│   ├── auth.py
+│   ├── master_data.py
+│   ├── prediction.py
+│   ├── reports.py
+│   ├── system.py
+│   ├── training_dataset.py
+│   └── users.py
+├── services/
+│   ├── database_seed.py
+│   ├── prediction_service.py
+│   ├── training_service.py
+│   ├── pdf_report_service.py
+│   └── excel_report_service.py
+├── static/
 ├── templates/
-│   ├── about.html
-│   ├── base.html
-│   ├── index.html
-│   ├── predict.html
-│   ├── result.html
-│   └── train.html
 ├── utils/
-│   ├── eda.py
-│   └── preprocessing.py
-└── static/
-    └── css/
-        └── style.css
+│   ├── access.py
+│   ├── preprocessing.py
+│   └── timezone.py
+├── data/
+├── requirements.txt
+└── README.md
 ```
 
-## Catatan
+## Database Utama
 
-- Aplikasi ini dibuat untuk tujuan akademis dan bukan sebagai diagnosis medis.
-- Pastikan dataset tersedia dan model sudah dilatih sebelum melakukan prediksi.
+| Tabel | Fungsi |
+|---|---|
+| `users` | Akun pengguna aplikasi |
+| `occupations` | Master occupation untuk data yang sesuai LabelEncoder |
+| `bmi_categories` | Master BMI Category untuk data yang sesuai LabelEncoder |
+| `training_dataset_records` | Data penelitian yang digunakan Train Model |
+| `patients` | Data pasien baru untuk prediksi |
+| `prediction_history` | Hasil prediksi yang tersimpan |
+| `model_metadata` | Model aktif, versi, dan waktu pelatihan terakhir |
+
+## Laporan
+
+Menu **System → Reports** menyediakan:
+
+- Training Dataset Report — PDF / Excel
+- Patient Report — PDF / Excel
+- Prediction History Report — PDF / Excel
+
+PDF menggunakan kop surat resmi aplikasi dan tanggal Asia/Jakarta. Excel menggunakan header berformat, border, auto-width, dan freeze header row.
+
+## Lisensi
+
+Digunakan untuk keperluan penelitian dan tugas akhir.
