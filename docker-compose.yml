@@ -7,14 +7,16 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ./models:/app/models
-      - sqlite_data:/data
+      # SQLite and model artifacts form one deployment state. Keeping them in
+      # one volume prevents a database from referring to a different model
+      # archive mounted from the host.
+      - app_runtime:/data
     environment:
       - FLASK_APP=app.py
       - FLASK_ENV=production
       - DATABASE_PATH=/data/sleep_disorder.db
-      - ACTIVE_MODEL_VERSION=v9
+      - TZ=Asia/Jakarta
     restart: unless-stopped
 
 volumes:
-  sqlite_data:
+  app_runtime:

@@ -39,6 +39,8 @@ database_path = Path(os.environ.get("DATABASE_PATH", Path(app.root_path) / "slee
 database_path.parent.mkdir(parents=True, exist_ok=True)
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{database_path.as_posix()}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+# Force browsers and reverse proxies to revalidate UI assets after deployment.
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
 
 db.init_app(app)
 login_manager.init_app(app)
