@@ -3,6 +3,7 @@
 import hashlib
 import json
 import os
+import time
 from datetime import date, datetime
 from pathlib import Path
 
@@ -87,6 +88,8 @@ def collect_state():
         for filename in ARTIFACT_FILES
         if (MODELS_DIR / filename).is_file()
     }
+    localtime_path = Path("/etc/localtime")
+    timezone_path = Path("/etc/timezone")
     state = {
         "database_path": app.config["SQLALCHEMY_DATABASE_URI"],
         "counts": counts,
@@ -114,6 +117,10 @@ def collect_state():
             "configured": str(JAKARTA_TZ),
             "jakarta_now": jakarta_now(),
             "environment_tz": os.environ.get("TZ"),
+            "system_now": datetime.now().astimezone(),
+            "system_tzname": time.tzname,
+            "etc_localtime": str(localtime_path.resolve()) if localtime_path.exists() else None,
+            "etc_timezone": timezone_path.read_text(encoding="utf-8").strip() if timezone_path.is_file() else None,
         },
     }
     comparable = {

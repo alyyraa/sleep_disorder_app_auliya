@@ -9,10 +9,13 @@ ENV TZ=Asia/Jakarta \
 WORKDIR /app
 
 # Menginstal dependency sistem yang mungkin dibutuhkan oleh pandas/numpy/xgboost
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     build-essential \
     libgomp1 \
     tzdata \
+    && ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime \
+    && echo "${TZ}" > /etc/timezone \
+    && dpkg-reconfigure -f noninteractive tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 # Menyalin file requirements terlebih dahulu

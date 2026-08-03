@@ -7,6 +7,23 @@ MODELS_PATH="$RUNTIME_DIR/models"
 SEED_DIR="/opt/sleep-stress-seed"
 SEED_STATE_FILE="/opt/sleep-stress-seed.sha256"
 RUNTIME_STATE_FILE="$RUNTIME_DIR/.seed-state.sha256"
+TIMEZONE="${TZ:-Asia/Jakarta}"
+
+if [ ! -f "/usr/share/zoneinfo/$TIMEZONE" ]; then
+  echo "ERROR: Timezone data is unavailable for $TIMEZONE." >&2
+  exit 1
+fi
+
+ln -snf "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
+echo "$TIMEZONE" > /etc/timezone
+export TZ="$TIMEZONE"
+
+if [ "$(cat /etc/timezone)" != "Asia/Jakarta" ] \
+  || [ "$(readlink -f /etc/localtime)" != "/usr/share/zoneinfo/Asia/Jakarta" ] \
+  || [ "$(date +%Z)" != "WIB" ]; then
+  echo "ERROR: Docker runtime timezone must be Asia/Jakarta." >&2
+  exit 1
+fi
 
 mkdir -p "$RUNTIME_DIR"
 
