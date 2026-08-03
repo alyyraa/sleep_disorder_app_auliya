@@ -25,6 +25,7 @@ from services.model_version_service import (
     active_model_version,
     available_model_versions,
     ensure_active_model_version,
+    ensure_version_dataset_archives,
     evaluation_for_version,
     train_and_register_version,
 )
@@ -62,6 +63,7 @@ with app.app_context():
     ensure_database_schema()
     activate_configured_model_version()
     ensure_active_model_version()
+    ensure_version_dataset_archives()
 
 # Global predictor instance
 predictor = None
@@ -183,14 +185,14 @@ def train():
 @app.post('/train/versions/<int:version_id>/activate')
 @admin_required
 def activate_trained_model(version_id):
-    """Activate an archived model bundle without retraining."""
+    """Restore an archived model and its exact Training Dataset without retraining."""
     try:
         version, changed = activate_model_version(version_id)
         if changed:
             global predictor
             predictor = None
             reset_predictor_cache()
-            flash(f"Model version {version.version} is now active.", "success")
+            flash(f"Model version {version.version} and its Training Dataset were restored successfully.", "success")
         else:
             flash(f"Model version {version.version} is already active.", "info")
     except Exception as error:

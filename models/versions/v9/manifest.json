@@ -1,29 +1,7 @@
 {
-  "version": "v9",
+  "dataset_filename": "dataset.csv",
+  "dataset_sha256": "565b4203f298d0830ad309bb972bcbc58d5c51d2ccec97d0e7f9fdbc6596cf0e",
   "training_date": "2026-08-02T18:33:39.832921",
-  "training_dataset_signature": "861fbf5a6952aac7bf319b8c66293477cd8b50a44b6ed2c2f6a19c5e95128efd",
   "training_record_count": 374,
-  "classification_metrics": {
-    "accuracy": 0.96,
-    "precision": 0.9663157894736842,
-    "recall": 0.96,
-    "f1_score": 0.9594920634920635
-  },
-  "regression_metrics": {
-    "mae": 0.1168726126352946,
-    "rmse": 0.21926632053474565,
-    "r2": 0.9845764131869649
-  },
-  "confusion_matrix": [
-    [12, 0, 3],
-    [0, 44, 0],
-    [0, 0, 16]
-  ],
-  "artifact_hashes": {
-    "feature_names.joblib": "0ba6af432500cd807ddd18487a53740f8addbaba2cc83c54d8dcb35a3db5e325",
-    "label_encoders.joblib": "3d08193622c06995e907beabe1cdf644d83691c6ebbf8cd051adfb8037547787",
-    "scaler.joblib": "950a3a59017b1816aad01439470b3bc9e1e300f7f3a716dba23d21f4a0bc4fcd",
-    "xgboost_classifier.joblib": "83dce57250537a009506835926ddfcf539843407b0684e06604a1d74bdbf9859",
-    "xgboost_regressor.joblib": "002fbd9a06fd053170174d0be7d0dcb839ae6376a34ccf6e459b894998480362"
-  }
+  "version": "v9"
 }

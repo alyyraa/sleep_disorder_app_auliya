@@ -47,7 +47,7 @@ def _page_chrome(canvas, document):
 
 
 def build_pdf(report_data, output):
-    generated_at = jakarta_now()
+    generated_at = report_data.get("generated_at") or jakarta_now()
     page_size = landscape(A4) if len(report_data["headers"]) > 6 else A4
     document = SimpleDocTemplate(output, pagesize=page_size, leftMargin=18 * mm, rightMargin=18 * mm, topMargin=66 * mm, bottomMargin=25 * mm)
     styles = getSampleStyleSheet()

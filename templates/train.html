@@ -90,7 +90,7 @@
 <div class="card border-0 dashboard-card">
   <div class="card-body p-4">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-      <div><h5 class="fw-bold mb-1">Available Model Versions</h5><p class="text-secondary small mb-0">Activate an archived artifact bundle without retraining or changing the Training Dataset.</p></div>
+      <div><h5 class="fw-bold mb-1">Available Model Versions</h5><p class="text-secondary small mb-0">Restore the selected model, evaluation results, and its archived Training Dataset without retraining.</p></div>
       <span class="badge text-bg-light">{{ model_versions|length }} versions</span>
     </div>
     <div class="table-responsive">
@@ -101,19 +101,20 @@
           {% set classification = version.classification_metrics_data %}
           {% set regression = version.regression_metrics_data %}
           {% set is_active = model_metadata and (model_metadata.active_version_id == version.id or (not model_metadata.active_version_id and model_metadata.model_version == version.version)) %}
+          {% set restore_required = is_active and dataset_changed %}
           <tr>
             <td><strong>{{ version.version }}</strong></td>
             <td>{{ version.training_date.strftime('%d %b %Y, %H:%M') }} WIB</td>
             <td>{{ version.training_record_count }}</td>
             <td>{{ '%.4f'|format(classification.accuracy) if classification.accuracy is defined else '-' }}</td>
             <td>{{ '%.4f'|format(regression.rmse) if regression.rmse is defined else '-' }}</td>
-            <td>{% if is_active %}<span class="badge text-bg-success">Active</span>{% else %}<span class="badge text-bg-secondary">Archived</span>{% endif %}</td>
+            <td>{% if restore_required %}<span class="badge text-bg-warning">Restore required</span>{% elif is_active %}<span class="badge text-bg-success">Active</span>{% else %}<span class="badge text-bg-secondary">Archived</span>{% endif %}</td>
             <td class="text-end">
-              {% if is_active %}
+              {% if is_active and not restore_required %}
               <button class="btn btn-sm btn-outline-secondary" type="button" disabled>Active</button>
               {% else %}
-              <form method="post" action="{{ url_for('activate_trained_model', version_id=version.id) }}" onsubmit="return confirm('Activate model version {{ version.version }} without retraining?');">
-                <button class="btn btn-sm btn-outline-primary" type="submit"><i class="bi bi-arrow-counterclockwise me-1"></i>Activate</button>
+              <form method="post" action="{{ url_for('activate_trained_model', version_id=version.id) }}" onsubmit="return confirm('Restore model version {{ version.version }} and its Training Dataset without retraining?');">
+                <button class="btn btn-sm btn-outline-primary" type="submit"><i class="bi bi-arrow-counterclockwise me-1"></i>{{ 'Restore' if restore_required else 'Activate' }}</button>
               </form>
               {% endif %}
             </td>

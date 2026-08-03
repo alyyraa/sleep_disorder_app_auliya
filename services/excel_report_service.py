@@ -10,6 +10,7 @@ BLUE = "0B3A75"
 
 
 def build_excel(report_data, output):
+    generated_at = report_data.get("generated_at") or jakarta_now()
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = report_data["title"][:31]
@@ -19,7 +20,7 @@ def build_excel(report_data, output):
     title_cell.font = Font(bold=True, size=14, color=BLUE)
     title_cell.alignment = Alignment(horizontal="center")
     sheet.merge_cells(start_row=2, start_column=1, end_row=2, end_column=column_count)
-    sheet.cell(2, 1, f"Tanggal Cetak: {format_indonesian_date(jakarta_now(), include_time=True)} | Total Data: {report_data['total_records']}").alignment = Alignment(horizontal="center")
+    sheet.cell(2, 1, f"Tanggal Cetak: {format_indonesian_date(generated_at, include_time=True)} | Total Data: {report_data['total_records']}").alignment = Alignment(horizontal="center")
     row_index = 4
     if report_data["summary"]:
         for label, value in report_data["summary"]:
@@ -41,7 +42,7 @@ def build_excel(report_data, output):
         for column, value in enumerate(row, start=1):
             cell = sheet.cell(row_index, column, value)
             cell.border = Border(left=thin, right=thin, top=thin, bottom=thin)
-            cell.alignment = Alignment(vertical="top")
+            cell.alignment = Alignment(vertical="top", wrap_text=True)
     sheet.freeze_panes = f"A{header_row + 1}"
     for column in range(1, column_count + 1):
         width = max(len(str(sheet.cell(row, column).value or "")) for row in range(1, sheet.max_row)) + 2

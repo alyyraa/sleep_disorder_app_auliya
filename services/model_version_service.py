@@ -11,6 +11,7 @@ from pathlib import Path
 
 import joblib
 import numpy as np
+import pandas as pd
 from sklearn.metrics import (
     accuracy_score,
     confusion_matrix,
@@ -25,7 +26,11 @@ from sklearn.metrics import (
 from extensions import db
 from models.database import ModelMetadata, ModelVersion
 from services.training_service import (
+    normalize_training_dataset_dataframe,
+    legacy_training_dataset_signature,
+    restore_training_dataset_dataframe,
     train_models_from_database,
+    training_dataset_content_signature,
     training_dataset_dataframe,
     training_dataset_signature,
 )
@@ -35,6 +40,8 @@ from utils.timezone import jakarta_now
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 MODELS_DIR = PROJECT_ROOT / "models"
 VERSION_ROOT = MODELS_DIR / "versions"
+DATASET_FILENAME = "dataset.csv"
+MANIFEST_FILENAME = "manifest.json"
 ARTIFACT_FILES = (
     "xgboost_classifier.joblib",
     "xgboost_regressor.joblib",
@@ -67,6 +74,74 @@ def _file_hash(path):
 
 def _artifact_hashes(directory):
     return {name: _file_hash(directory / name) for name in ARTIFACT_FILES}
+
+
+def _manifest_path(directory):
+    return Path(directory) / MANIFEST_FILENAME
+
+
+def _read_manifest(directory):
+    path = _manifest_path(directory)
+    if not path.is_file():
+        return {}
+    with path.open("r", encoding="utf-8") as manifest_file:
+        return json.load(manifest_file)
+
+
+def _write_manifest(directory, version, training_date, record_count, dataset_hash):
+    """Write only the essential, human-readable restore-point metadata."""
+    directory = Path(directory)
+    manifest = {
+        "version": version,
+        "training_date": training_date.isoformat(),
+        "training_record_count": int(record_count),
+        "dataset_filename": DATASET_FILENAME,
+        "dataset_sha256": dataset_hash,
+    }
+    staging = directory / f".{MANIFEST_FILENAME}.tmp"
+    with staging.open("w", encoding="utf-8") as manifest_file:
+        json.dump(manifest, manifest_file, indent=2, sort_keys=True)
+        manifest_file.write("\n")
+    os.replace(staging, _manifest_path(directory))
+
+
+def _archive_dataset(directory, dataset, version, training_date):
+    """Archive the exact normalized Training Dataset beside a version's artifacts."""
+    directory = Path(directory)
+    normalized = normalize_training_dataset_dataframe(dataset)
+    dataset_path = directory / DATASET_FILENAME
+    if dataset_path.exists():
+        archived = normalize_training_dataset_dataframe(pd.read_csv(dataset_path))
+        if training_dataset_content_signature(archived) != training_dataset_content_signature(normalized):
+            raise FileExistsError(f"Dataset archive for {version} already contains different records.")
+    else:
+        staging = directory / f".{DATASET_FILENAME}.tmp"
+        normalized.to_csv(staging, index=False, lineterminator="\n")
+        os.replace(staging, dataset_path)
+
+    dataset_hash = _file_hash(dataset_path)
+    _write_manifest(directory, version, training_date, len(normalized), dataset_hash)
+    return training_dataset_content_signature(normalized), dataset_hash
+
+
+def _load_archived_dataset(version):
+    directory = _resolve_artifact_path(version.artifact_path)
+    manifest = _read_manifest(directory)
+    filename = manifest.get("dataset_filename", DATASET_FILENAME)
+    dataset_path = directory / filename
+    if not dataset_path.is_file():
+        raise FileNotFoundError(f"Training Dataset archive is not available for {version.version}.")
+    expected_hash = manifest.get("dataset_sha256")
+    if expected_hash and _file_hash(dataset_path) != expected_hash:
+        raise ValueError("Training Dataset archive integrity validation failed.")
+
+    dataset = normalize_training_dataset_dataframe(pd.read_csv(dataset_path))
+    if len(dataset) != version.training_record_count:
+        raise ValueError("Training Dataset archive record count does not match the model version.")
+    signature = training_dataset_content_signature(dataset)
+    if signature != version.training_dataset_signature:
+        raise ValueError("Training Dataset archive does not match the selected model version.")
+    return dataset
 
 
 def _validate_bundle(directory, expected_hashes=None):
@@ -166,11 +241,11 @@ def _backup_active_bundle():
     return backup
 
 
-def evaluate_artifact_bundle(directory):
+def evaluate_artifact_bundle(directory, dataset=None):
     """Evaluate existing artifacts on the unchanged deterministic pipeline split."""
     directory = Path(directory)
     _validate_bundle(directory)
-    dataset = training_dataset_dataframe()
+    dataset = dataset if dataset is not None else training_dataset_dataframe()
     temporary_path = None
     try:
         with tempfile.NamedTemporaryFile(
@@ -278,7 +353,8 @@ def ensure_active_model_version():
             db.session.commit()
         return existing
 
-    dataset_signature = metadata.training_dataset_signature or training_dataset_signature()
+    dataset = training_dataset_dataframe()
+    dataset_signature = training_dataset_content_signature(dataset)
     classification, regression, matrix = evaluate_artifact_bundle(MODELS_DIR)
     artifact_directory, hashes, archive_created = _archive_active_bundle(metadata.model_version)
     try:
@@ -295,6 +371,12 @@ def ensure_active_model_version():
         )
         db.session.add(version)
         db.session.flush()
+        _archive_dataset(
+            artifact_directory,
+            dataset,
+            version.version,
+            version.training_date,
+        )
         metadata.active_version_id = version.id
         metadata.training_dataset_signature = dataset_signature
         db.session.commit()
@@ -313,7 +395,7 @@ def register_archived_model_version(version_name):
         return existing, False
 
     artifact_directory = VERSION_ROOT / version_name
-    manifest_path = artifact_directory / "manifest.json"
+    manifest_path = artifact_directory / MANIFEST_FILENAME
     if not manifest_path.is_file():
         raise FileNotFoundError(f"Model version manifest was not found for {version_name}.")
 
@@ -325,14 +407,37 @@ def register_archived_model_version(version_name):
 
     expected_hashes = manifest.get("artifact_hashes")
     hashes = _validate_bundle(artifact_directory, expected_hashes)
+    dataset_path = artifact_directory / manifest.get("dataset_filename", DATASET_FILENAME)
+    if not dataset_path.is_file():
+        raise FileNotFoundError(f"Training Dataset archive was not found for {version_name}.")
+    expected_dataset_hash = manifest.get("dataset_sha256")
+    if expected_dataset_hash and _file_hash(dataset_path) != expected_dataset_hash:
+        raise ValueError("Training Dataset archive integrity validation failed.")
+    archived_dataset = normalize_training_dataset_dataframe(pd.read_csv(dataset_path))
+    dataset_signature = training_dataset_content_signature(archived_dataset)
+    if len(archived_dataset) != int(manifest["training_record_count"]):
+        raise ValueError(f"Training Dataset archive count does not match {version_name}.")
+
+    if all(key in manifest for key in ("classification_metrics", "regression_metrics", "confusion_matrix")):
+        classification = manifest["classification_metrics"]
+        regression = manifest["regression_metrics"]
+        matrix = manifest["confusion_matrix"]
+    else:
+        classification, regression, matrix = evaluate_artifact_bundle(
+            artifact_directory,
+            archived_dataset,
+        )
+    classification = dict(classification)
+    classification.pop("confusion_matrix", None)
+
     version = ModelVersion(
         version=version_name,
         training_date=datetime.fromisoformat(manifest["training_date"]),
-        training_dataset_signature=manifest["training_dataset_signature"],
+        training_dataset_signature=dataset_signature,
         training_record_count=int(manifest["training_record_count"]),
-        classification_metrics=_json_dump(manifest["classification_metrics"]),
-        regression_metrics=_json_dump(manifest["regression_metrics"]),
-        confusion_matrix=_json_dump(manifest["confusion_matrix"]),
+        classification_metrics=_json_dump(classification),
+        regression_metrics=_json_dump(regression),
+        confusion_matrix=_json_dump(matrix),
         artifact_path=_stored_artifact_path(artifact_directory),
         artifact_hashes=_json_dump(hashes),
     )
@@ -372,6 +477,59 @@ def active_model_version(metadata=None):
     return ModelVersion.query.filter_by(version=metadata.model_version).first()
 
 
+def ensure_version_dataset_archives():
+    """Backfill recoverable historical CSV archives without adding database tables."""
+    versions = ModelVersion.query.all()
+    if not versions:
+        return
+
+    current_dataset = training_dataset_dataframe()
+    current_count = len(current_dataset)
+    current_signatures = {
+        training_dataset_content_signature(current_dataset),
+        legacy_training_dataset_signature(),
+    }
+    original_path = PROJECT_ROOT / "data" / "Sleep_health_and_lifestyle_dataset.csv"
+    original_dataset = None
+    if original_path.is_file():
+        original_dataset = normalize_training_dataset_dataframe(pd.read_csv(original_path))
+
+    changed = False
+    for version in versions:
+        directory = _resolve_artifact_path(version.artifact_path)
+        dataset_path = directory / DATASET_FILENAME
+        if dataset_path.is_file():
+            candidate = normalize_training_dataset_dataframe(pd.read_csv(dataset_path))
+        elif version.training_record_count == current_count and version.training_dataset_signature in current_signatures:
+            candidate = current_dataset
+        elif (
+            original_dataset is not None
+            and version.version in {"v7", "v9"}
+            and version.training_record_count == len(original_dataset)
+        ):
+            candidate = original_dataset
+        else:
+            continue
+
+        signature, _ = _archive_dataset(
+            directory,
+            candidate,
+            version.version,
+            version.training_date,
+        )
+        if version.training_dataset_signature != signature:
+            version.training_dataset_signature = signature
+            changed = True
+
+    metadata = db.session.get(ModelMetadata, 1)
+    active = active_model_version(metadata)
+    if metadata and active and metadata.training_dataset_signature != active.training_dataset_signature:
+        metadata.training_dataset_signature = active.training_dataset_signature
+        changed = True
+    if changed:
+        db.session.commit()
+
+
 def available_model_versions():
     return sorted(ModelVersion.query.all(), key=lambda item: _version_number(item.version), reverse=True)
 
@@ -388,7 +546,8 @@ def train_and_register_version(dataset_signature=None):
     """Run the existing training adapter and persist the resulting version bundle."""
     with _MODEL_OPERATION_LOCK:
         metadata = db.session.get(ModelMetadata, 1)
-        dataset_signature = dataset_signature or training_dataset_signature()
+        dataset = training_dataset_dataframe()
+        dataset_signature = training_dataset_content_signature(dataset)
         version_name = _next_version(metadata)
         backup = _backup_active_bundle()
         artifact_directory = None
@@ -400,8 +559,16 @@ def train_and_register_version(dataset_signature=None):
                     "Model training did not return complete classification and regression metrics."
                 )
             _validate_bundle(MODELS_DIR)
-            artifact_directory, hashes, archive_created = _archive_active_bundle(version_name)
             training_date = jakarta_now()
+            artifact_directory, hashes, archive_created = _archive_active_bundle(version_name)
+            archived_signature, _ = _archive_dataset(
+                artifact_directory,
+                dataset,
+                version_name,
+                training_date,
+            )
+            if archived_signature != dataset_signature:
+                raise ValueError("Archived Training Dataset does not match the trained dataset.")
             version = _version_record(
                 version=version_name,
                 training_date=training_date,
@@ -439,7 +606,7 @@ def train_and_register_version(dataset_signature=None):
 
 
 def activate_model_version(version_id):
-    """Switch the canonical active bundle without training or dataset mutation."""
+    """Restore a complete model, dataset, metrics, and metadata restore point."""
     with _MODEL_OPERATION_LOCK:
         version = db.session.get(ModelVersion, version_id)
         if version is None:
@@ -450,12 +617,17 @@ def activate_model_version(version_id):
 
         source_directory = _resolve_artifact_path(version.artifact_path)
         _validate_bundle(source_directory, version.artifact_hashes_data)
-        if metadata.active_version_id == version.id:
+        archived_dataset = _load_archived_dataset(version)
+        current_signature = training_dataset_signature()
+        if metadata.active_version_id == version.id and current_signature == version.training_dataset_signature:
             _validate_bundle(MODELS_DIR, version.artifact_hashes_data)
             return version, False
 
         backup = _backup_active_bundle()
         try:
+            restored_count = restore_training_dataset_dataframe(archived_dataset)
+            if restored_count != version.training_record_count:
+                raise ValueError("Restored Training Dataset record count is invalid.")
             _replace_active_bundle(source_directory)
             _validate_bundle(MODELS_DIR, version.artifact_hashes_data)
             metadata.active_version_id = version.id

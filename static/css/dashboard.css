@@ -28,7 +28,10 @@ canvas {
   background: linear-gradient(180deg, #0c346b 0%, #08264f 100%);
   border: 0;
   color: #fff;
+  height: 100dvh;
+  max-height: 100dvh;
   max-width: 100%;
+  overflow: hidden;
 }
 
 .app-sidebar .offcanvas-header,
@@ -37,9 +40,14 @@ canvas {
 }
 
 .app-sidebar .offcanvas-body {
+  flex: 1 1 auto;
+  height: 100%;
   min-height: 0;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
 }
 
 .sidebar-brand {
@@ -322,7 +330,10 @@ body.dashboard-body > main.container {
 
 @media (min-width: 992px) {
   .app-sidebar.offcanvas {
-    height: 100vh;
+    bottom: 0;
+    height: 100dvh;
+    max-height: 100dvh;
+    top: 0;
     transform: none !important;
     visibility: visible !important;
     width: var(--sidebar-width);
