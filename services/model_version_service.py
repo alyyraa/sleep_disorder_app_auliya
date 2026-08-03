@@ -349,12 +349,15 @@ def register_archived_model_version(version_name):
 
 
 def activate_configured_model_version():
-    """Register and activate the version requested by deployment configuration."""
+    """Bootstrap a bundled version when the database has no valid active catalog row."""
     version_name = os.environ.get("ACTIVE_MODEL_VERSION", "").strip()
     if not version_name:
         return None, False
 
     version, _ = register_archived_model_version(version_name)
+    metadata = db.session.get(ModelMetadata, 1)
+    if active_model_version(metadata) is not None:
+        return active_model_version(metadata), False
     return activate_model_version(version.id)
 
 

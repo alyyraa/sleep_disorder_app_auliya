@@ -60,8 +60,8 @@ with app.app_context():
     ensure_database_schema()
     seed_database()
     ensure_database_schema()
-    ensure_active_model_version()
     activate_configured_model_version()
+    ensure_active_model_version()
 
 # Global predictor instance
 predictor = None
