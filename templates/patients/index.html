@@ -1,4 +1,68 @@
 {% extends "base.html" %}
-{% block title %}Patients - Sleep Stress Predictor{% endblock %}{% block page_title %}Patients{% endblock %}
-{% block content %}<div class="card border-0 dashboard-card"><div class="card-body p-4"><div class="d-flex justify-content-end mb-3"><a class="btn btn-primary" href="{{ url_for('master_data.patient_create') }}"><i class="bi bi-person-plus me-2"></i>Add Patient</a></div><div class="table-responsive"><table class="table data-table align-middle"><thead><tr><th>No.</th><th>Full Name</th><th>Gender</th><th>Age</th><th>Occupation</th><th>BMI Category</th><th>Created</th><th class="text-end">Actions</th></tr></thead><tbody>{% for patient in patients %}<tr><td>{{ loop.index }}</td><td class="fw-semibold">{{ patient.full_name }}</td><td>{{ patient.gender }}</td><td>{{ patient.age }}</td><td>{{ patient.occupation.name }}</td><td>{{ patient.bmi_category.name }}</td><td>{{ patient.created_at.strftime('%d %b %Y') }}</td><td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('master_data.patient_edit', patient_id=patient.id) }}">Edit</a><form method="post" class="d-inline" action="{{ url_for('master_data.patient_delete', patient_id=patient.id) }}" onsubmit="return confirm('Delete this patient?');"><button class="btn btn-sm btn-outline-danger">Delete</button></form></td></tr>{% endfor %}</tbody></table></div></div></div>{% endblock %}
-{% block extra_scripts %}<script>$(function () { $('.data-table').DataTable({pageLength:10}); });</script>{% endblock %}
+{% block title %}Patients - Sleep Stress Predictor{% endblock %}
+{% block page_title %}Patients{% endblock %}
+{% block page_subtitle %}Manage patient health information used for prediction.{% endblock %}
+{% block content %}
+<div class="card border-0 dashboard-card">
+  <div class="card-body p-4">
+    <div class="d-flex justify-content-end mb-3">
+      <a class="btn btn-primary" href="{{ url_for('master_data.patient_create') }}"><i class="bi bi-person-plus me-2"></i>Add Patient</a>
+    </div>
+    <div class="table-responsive">
+      <table class="table data-table align-middle text-nowrap w-100">
+        <thead>
+          <tr>
+            <th>Full Name</th>
+            <th>Gender</th>
+            <th>Age</th>
+            <th>Occupation</th>
+            <th>BMI Category</th>
+            <th>Sleep Duration</th>
+            <th>Quality of Sleep</th>
+            <th>Physical Activity Level</th>
+            <th>Daily Steps</th>
+            <th>Heart Rate</th>
+            <th>Blood Pressure</th>
+            <th>Created Date</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for patient in patients %}
+          <tr>
+            <td class="fw-semibold">{{ patient.full_name }}</td>
+            <td>{{ patient.gender }}</td>
+            <td>{{ patient.age }}</td>
+            <td>{{ patient.occupation.name }}</td>
+            <td>{{ patient.bmi_category.name }}</td>
+            <td>{{ patient.sleep_duration }} hours</td>
+            <td>{{ patient.quality_of_sleep }} / 10</td>
+            <td>{{ patient.physical_activity_level }}</td>
+            <td>{{ patient.daily_steps }}</td>
+            <td>{{ patient.heart_rate }} bpm</td>
+            <td>{{ patient.systolic_bp }}/{{ patient.diastolic_bp }} mmHg</td>
+            <td>{{ patient.created_at.strftime('%d %b %Y') }}</td>
+            <td class="text-end text-nowrap">
+              <a class="btn btn-sm btn-outline-primary" href="{{ url_for('master_data.patient_edit', patient_id=patient.id) }}">Edit</a>
+              <form method="post" class="d-inline" action="{{ url_for('master_data.patient_delete', patient_id=patient.id) }}" onsubmit="return confirm('Delete this patient?');">
+                <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+$(function () {
+  $('.data-table').DataTable({
+    pageLength: 10,
+    scrollX: true
+  });
+});
+</script>
+{% endblock %}

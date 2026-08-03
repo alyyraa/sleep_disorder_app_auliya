@@ -22,6 +22,11 @@ def ensure_database_schema():
     """Upgrade the existing SQLite file without replacing its data."""
     _add_column_if_missing("prediction_history", "patient_snapshot", "TEXT")
     _add_column_if_missing("model_metadata", "training_dataset_signature", "VARCHAR(64)")
+    _add_column_if_missing(
+        "model_metadata",
+        "active_version_id",
+        "INTEGER REFERENCES model_versions(id)",
+    )
     db.session.expire_all()
 
     histories = PredictionHistory.query.options(

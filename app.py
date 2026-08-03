@@ -19,9 +19,17 @@ from routes.reports import reports_bp
 from routes.users import users_bp
 from services.database_migration import ensure_database_schema
 from services.database_seed import seed_database
-from services.training_service import train_models_from_database, training_dataset_signature
+from services.model_version_service import (
+    activate_model_version,
+    active_model_version,
+    available_model_versions,
+    ensure_active_model_version,
+    evaluation_for_version,
+    train_and_register_version,
+)
+from services.prediction_service import reset_predictor_cache
+from services.training_service import training_dataset_signature
 from utils.access import admin_required
-from utils.timezone import jakarta_now
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "sleep-disorder-xgboost-app-2024")
@@ -51,6 +59,7 @@ with app.app_context():
     ensure_database_schema()
     seed_database()
     ensure_database_schema()
+    ensure_active_model_version()
 
 # Global predictor instance
 predictor = None
@@ -117,61 +126,74 @@ def predict():
 @admin_required
 def train():
     """Model training and evaluation metrics page"""
-    classification_results = None
-    regression_results = None
     trained = False
     error = None
+    notice = None
     training_record_count = TrainingDatasetRecord.query.count()
     model_metadata = db.session.get(ModelMetadata, 1)
+    active_version = active_model_version(model_metadata)
+    classification_results, regression_results = evaluation_for_version(active_version)
+    dataset_changed = (
+        model_metadata is None
+        or model_metadata.training_dataset_signature != training_dataset_signature()
+    )
     
     if request.method == 'POST':
         try:
             current_dataset_signature = training_dataset_signature()
             if model_metadata and model_metadata.training_dataset_signature == current_dataset_signature:
-                error = "The Training Dataset has not changed since the last successful training. The active model version was kept."
-                return render_template('train.html',
-                                     classification_results=classification_results,
-                                     regression_results=regression_results,
-                                     trained=trained,
-                                     error=error,
-                                     model_metadata=model_metadata,
-                                     training_record_count=training_record_count)
-            (trainer, clf_results, reg_results), training_record_count = train_models_from_database()
-            if trainer is not None and clf_results is not None and reg_results is not None:
-                classification_results = clf_results
-                regression_results = reg_results
+                notice = "The Training Dataset has not changed since the last successful training. The active model version and its evaluation metrics were kept."
+            else:
+                active_version, _, _, training_record_count = train_and_register_version(
+                    current_dataset_signature
+                )
                 trained = True
-                current_version = model_metadata.model_version if model_metadata else "v0"
-                try:
-                    next_version = f"v{int(current_version.lstrip('v')) + 1}"
-                except ValueError:
-                    next_version = "v1"
-                if model_metadata is None:
-                    model_metadata = ModelMetadata(
-                        id=1,
-                        active_model="XGBoost Classifier and Regressor",
-                        model_version=next_version,
-                    )
-                    db.session.add(model_metadata)
-                else:
-                    model_metadata.model_version = next_version
-                model_metadata.last_training_date = jakarta_now()
-                model_metadata.training_dataset_signature = current_dataset_signature
-                db.session.commit()
                 global predictor
                 predictor = None
-            else:
-                error = "Model training did not return complete classification and regression metrics."
+                reset_predictor_cache()
+                model_metadata = db.session.get(ModelMetadata, 1)
+                classification_results, regression_results = evaluation_for_version(active_version)
         except Exception as e:
             error = f"Training failed: {str(e)}"
+
+    model_metadata = db.session.get(ModelMetadata, 1)
+    active_version = active_model_version(model_metadata)
+    dataset_changed = (
+        model_metadata is None
+        or model_metadata.training_dataset_signature != training_dataset_signature()
+    )
+    if not trained:
+        classification_results, regression_results = evaluation_for_version(active_version)
     
     return render_template('train.html', 
                          classification_results=classification_results,
                          regression_results=regression_results,
                          trained=trained,
                          error=error,
+                         notice=notice,
                          model_metadata=model_metadata,
+                         active_version=active_version,
+                         model_versions=available_model_versions(),
+                         dataset_changed=dataset_changed,
                          training_record_count=training_record_count)
+
+
+@app.post('/train/versions/<int:version_id>/activate')
+@admin_required
+def activate_trained_model(version_id):
+    """Activate an archived model bundle without retraining."""
+    try:
+        version, changed = activate_model_version(version_id)
+        if changed:
+            global predictor
+            predictor = None
+            reset_predictor_cache()
+            flash(f"Model version {version.version} is now active.", "success")
+        else:
+            flash(f"Model version {version.version} is already active.", "info")
+    except Exception as error:
+        flash(f"Model activation failed: {error}", "danger")
+    return redirect(url_for("train"))
 
 
 if __name__ == '__main__':

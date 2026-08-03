@@ -13,6 +13,12 @@ def _get_predictor():
     return _predictor
 
 
+def reset_predictor_cache():
+    """Force the next prediction to load the currently active artifact bundle."""
+    global _predictor
+    _predictor = None
+
+
 def predict_patient(patient):
     """Map a Patient record to the existing predictor's exact input contract."""
     predictor = _get_predictor()

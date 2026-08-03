@@ -1,9 +1,129 @@
 {% extends "base.html" %}
 {% block title %}Train Model - Sleep Stress Predictor{% endblock %}
 {% block page_title %}Train Model{% endblock %}
-{% block page_subtitle %}Train the existing XGBoost models using all Training Dataset records.{% endblock %}
+{% block page_subtitle %}Train and manage versioned XGBoost model artifacts.{% endblock %}
 {% block content %}
-{% if error %}<div class="alert alert-info"><i class="bi bi-info-circle me-2"></i>{{ error }}</div>{% endif %}
-<div class="row g-4 mb-4"><div class="col-lg-8"><div class="card border-0 dashboard-card h-100"><div class="card-body p-4"><div class="d-flex justify-content-between align-items-center mb-4 gap-3"><h5 class="fw-bold mb-0"><i class="bi bi-cpu-fill text-primary me-2"></i>Current Model</h5><img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Sleep Stress Predictor" class="train-logo"></div><div class="row g-3"><div class="col-md-6"><p class="metric-label mb-1">Current Algorithm</p><strong>{{ model_metadata.active_model if model_metadata else 'XGBoost Classifier and Regressor' }}</strong></div><div class="col-md-3"><p class="metric-label mb-1">Model Version</p><strong>{{ model_metadata.model_version if model_metadata else '-' }}</strong></div><div class="col-md-3"><p class="metric-label mb-1">Training Records</p><strong>{{ training_record_count }}</strong></div><div class="col-12"><p class="metric-label mb-1">Last Training Date</p><strong>{{ model_metadata.last_training_date.strftime('%d %b %Y, %H:%M') if model_metadata and model_metadata.last_training_date else 'Not available' }} WIB</strong></div></div></div></div></div><div class="col-lg-4"><div class="card border-0 dashboard-card h-100"><div class="card-body p-4 d-flex flex-column justify-content-between"><div><h5 class="fw-bold">Run Training</h5><p class="text-secondary small">This uses every Training Dataset record and the existing XGBoost pipeline without changing its configuration.</p></div><form method="post" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<span class=\'spinner-border spinner-border-sm me-2\'></span>Training...';"><button class="btn btn-primary w-100" type="submit"><i class="bi bi-play-fill me-2"></i>Train Model</button></form></div></div></div></div>
-{% if trained %}<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>Training completed successfully. Active model version: <strong>{{ model_metadata.model_version }}</strong>.</div><div class="row g-4"><div class="col-lg-6"><div class="card border-0 dashboard-card h-100"><div class="card-body p-4"><h5 class="fw-bold mb-4">Classification Evaluation</h5><div class="row g-3">{% for label, value in [('Accuracy', classification_results.accuracy), ('Precision', classification_results.precision), ('Recall', classification_results.recall), ('F1 Score', classification_results.f1_score)] %}<div class="col-6"><div class="border rounded-3 p-3"><span class="metric-label d-block">{{ label }}</span><strong class="fs-4">{{ '%.4f'|format(value) }}</strong></div></div>{% endfor %}</div><h6 class="fw-bold mt-4">Confusion Matrix</h6><div class="table-responsive"><table class="table table-bordered text-center mb-0"><tbody>{% for row in classification_results.confusion_matrix %}<tr>{% for value in row %}<td>{{ value }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div></div></div></div><div class="col-lg-6"><div class="card border-0 dashboard-card h-100"><div class="card-body p-4"><h5 class="fw-bold mb-4">Regression Evaluation</h5><div class="row g-3">{% for label, value in [('MAE', regression_results.mae), ('RMSE', regression_results.rmse), ('R²', regression_results.r2)] %}<div class="col-6"><div class="border rounded-3 p-3"><span class="metric-label d-block">{{ label }}</span><strong class="fs-4">{{ '%.4f'|format(value) }}</strong></div></div>{% endfor %}</div></div></div></div></div>{% endif %}
+{% if error %}
+<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>{{ error }}</div>
+{% endif %}
+{% if notice %}
+<div class="alert alert-info"><i class="bi bi-info-circle me-2"></i>{{ notice }}</div>
+{% endif %}
+{% if trained %}
+<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>Training completed successfully. Active model version: <strong>{{ model_metadata.model_version }}</strong>.</div>
+{% endif %}
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-8">
+    <div class="card border-0 dashboard-card h-100">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4 gap-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-cpu-fill text-primary me-2"></i>Current Model</h5>
+          <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Sleep Stress Predictor" class="train-logo">
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6"><p class="metric-label mb-1">Current Algorithm</p><strong>{{ model_metadata.active_model if model_metadata else 'XGBoost Classifier and Regressor' }}</strong></div>
+          <div class="col-md-3"><p class="metric-label mb-1">Active Version</p><strong>{{ model_metadata.model_version if model_metadata else '-' }}</strong></div>
+          <div class="col-md-3"><p class="metric-label mb-1">Training Records</p><strong>{{ active_version.training_record_count if active_version else training_record_count }}</strong></div>
+          <div class="col-md-6"><p class="metric-label mb-1">Last Training Date</p><strong>{{ model_metadata.last_training_date.strftime('%d %b %Y, %H:%M') if model_metadata and model_metadata.last_training_date else 'Not available' }}{% if model_metadata and model_metadata.last_training_date %} WIB{% endif %}</strong></div>
+          <div class="col-md-6"><p class="metric-label mb-1">Dataset Status</p>{% if dataset_changed %}<span class="badge text-bg-warning">Dataset changed</span>{% else %}<span class="badge text-bg-success">Up to date</span>{% endif %}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card border-0 dashboard-card h-100">
+      <div class="card-body p-4 d-flex flex-column justify-content-between">
+        <div>
+          <h5 class="fw-bold">Run Training</h5>
+          <p class="text-secondary small">This uses every Training Dataset record and the existing XGBoost pipeline. A new version is created only when the dataset fingerprint has changed.</p>
+        </div>
+        <form method="post" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<span class=\'spinner-border spinner-border-sm me-2\'></span>Training...';">
+          <button class="btn btn-primary w-100" type="submit"><i class="bi bi-play-fill me-2"></i>Train Model</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if classification_results and regression_results %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h5 class="fw-bold mb-0">Active Model Evaluation</h5>
+  {% if active_version %}<span class="badge text-bg-primary">{{ active_version.version }}</span>{% endif %}
+</div>
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="card border-0 dashboard-card h-100">
+      <div class="card-body p-4">
+        <h5 class="fw-bold mb-4">Classification Evaluation</h5>
+        <div class="row g-3">
+          {% for label, value in [('Accuracy', classification_results.accuracy), ('Precision', classification_results.precision), ('Recall', classification_results.recall), ('F1 Score', classification_results.f1_score)] %}
+          <div class="col-6"><div class="border rounded-3 p-3"><span class="metric-label d-block">{{ label }}</span><strong class="fs-4">{{ '%.4f'|format(value) }}</strong></div></div>
+          {% endfor %}
+        </div>
+        <h6 class="fw-bold mt-4">Confusion Matrix</h6>
+        <div class="table-responsive">
+          <table class="table table-bordered text-center mb-0">
+            <tbody>{% for row in classification_results.confusion_matrix %}<tr>{% for value in row %}<td>{{ value }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card border-0 dashboard-card h-100">
+      <div class="card-body p-4">
+        <h5 class="fw-bold mb-4">Regression Evaluation</h5>
+        <div class="row g-3">
+          {% for label, value in [('MAE', regression_results.mae), ('RMSE', regression_results.rmse), ('R²', regression_results.r2)] %}
+          <div class="col-6"><div class="border rounded-3 p-3"><span class="metric-label d-block">{{ label }}</span><strong class="fs-4">{{ '%.4f'|format(value) }}</strong></div></div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-warning">Evaluation metrics are not available for the active model version.</div>
+{% endif %}
+
+<div class="card border-0 dashboard-card">
+  <div class="card-body p-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <div><h5 class="fw-bold mb-1">Available Model Versions</h5><p class="text-secondary small mb-0">Activate an archived artifact bundle without retraining or changing the Training Dataset.</p></div>
+      <span class="badge text-bg-light">{{ model_versions|length }} versions</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead><tr><th>Version</th><th>Training Date</th><th>Records</th><th>Accuracy</th><th>RMSE</th><th>Status</th><th class="text-end">Action</th></tr></thead>
+        <tbody>
+          {% for version in model_versions %}
+          {% set classification = version.classification_metrics_data %}
+          {% set regression = version.regression_metrics_data %}
+          {% set is_active = model_metadata and (model_metadata.active_version_id == version.id or (not model_metadata.active_version_id and model_metadata.model_version == version.version)) %}
+          <tr>
+            <td><strong>{{ version.version }}</strong></td>
+            <td>{{ version.training_date.strftime('%d %b %Y, %H:%M') }} WIB</td>
+            <td>{{ version.training_record_count }}</td>
+            <td>{{ '%.4f'|format(classification.accuracy) if classification.accuracy is defined else '-' }}</td>
+            <td>{{ '%.4f'|format(regression.rmse) if regression.rmse is defined else '-' }}</td>
+            <td>{% if is_active %}<span class="badge text-bg-success">Active</span>{% else %}<span class="badge text-bg-secondary">Archived</span>{% endif %}</td>
+            <td class="text-end">
+              {% if is_active %}
+              <button class="btn btn-sm btn-outline-secondary" type="button" disabled>Active</button>
+              {% else %}
+              <form method="post" action="{{ url_for('activate_trained_model', version_id=version.id) }}" onsubmit="return confirm('Activate model version {{ version.version }} without retraining?');">
+                <button class="btn btn-sm btn-outline-primary" type="submit"><i class="bi bi-arrow-counterclockwise me-1"></i>Activate</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" class="text-center text-secondary py-4">No archived model versions are available.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 {% endblock %}

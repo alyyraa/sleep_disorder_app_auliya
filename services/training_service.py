@@ -12,9 +12,8 @@ from models.database import TrainingDatasetRecord
 from models.train_model import train_models_pipeline
 
 
-def training_dataset_signature():
-    """Return a stable fingerprint of the current Training Dataset state."""
-    records = (
+def _training_records():
+    return (
         TrainingDatasetRecord.query.options(
             joinedload(TrainingDatasetRecord.occupation),
             joinedload(TrainingDatasetRecord.bmi_category),
@@ -22,6 +21,11 @@ def training_dataset_signature():
         .order_by(TrainingDatasetRecord.id)
         .all()
     )
+
+
+def training_dataset_signature():
+    """Return a stable fingerprint of the current Training Dataset state."""
+    records = _training_records()
     state = [
         {
             "id": record.id,
@@ -47,20 +51,13 @@ def training_dataset_signature():
     return hashlib.sha256(encoded_state.encode("utf-8")).hexdigest()
 
 
-def train_models_from_database():
-    """Export all training records in the original CSV format and run existing training."""
-    records = (
-        TrainingDatasetRecord.query.options(
-            joinedload(TrainingDatasetRecord.occupation),
-            joinedload(TrainingDatasetRecord.bmi_category),
-        )
-        .order_by(TrainingDatasetRecord.id)
-        .all()
-    )
+def training_dataset_dataframe():
+    """Return all database training records in the original research CSV format."""
+    records = _training_records()
     if not records:
         raise ValueError("Training Dataset is empty. Add training records before training the model.")
 
-    dataset = pd.DataFrame(
+    return pd.DataFrame(
         [
             {
                 "Person ID": record.source_person_id or record.id,
@@ -81,6 +78,11 @@ def train_models_from_database():
         ]
     )
 
+
+def train_models_from_database():
+    """Export all training records in the original CSV format and run existing training."""
+    dataset = training_dataset_dataframe()
+
     temporary_path = None
     try:
         with tempfile.NamedTemporaryFile(
@@ -88,7 +90,7 @@ def train_models_from_database():
         ) as temporary_file:
             temporary_path = temporary_file.name
             dataset.to_csv(temporary_file, index=False)
-        return train_models_pipeline(temporary_path), len(records)
+        return train_models_pipeline(temporary_path), len(dataset)
     finally:
         if temporary_path and os.path.exists(temporary_path):
             os.remove(temporary_path)

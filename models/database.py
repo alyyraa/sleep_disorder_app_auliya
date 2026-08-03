@@ -119,6 +119,46 @@ class PredictionHistory(db.Model):
             return {}
 
 
+class ModelVersion(db.Model):
+    """Immutable metadata and evaluation results for one trained artifact bundle."""
+
+    __tablename__ = "model_versions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    version = db.Column(db.String(20), nullable=False, unique=True, index=True)
+    training_date = db.Column(db.DateTime, nullable=False, index=True)
+    training_dataset_signature = db.Column(db.String(64), nullable=False, index=True)
+    training_record_count = db.Column(db.Integer, nullable=False)
+    classification_metrics = db.Column(db.Text, nullable=False)
+    regression_metrics = db.Column(db.Text, nullable=False)
+    confusion_matrix = db.Column(db.Text, nullable=False)
+    artifact_path = db.Column(db.String(500), nullable=False)
+    artifact_hashes = db.Column(db.Text, nullable=False)
+
+    @staticmethod
+    def _decode_json(value, fallback):
+        try:
+            return json.loads(value) if value else fallback
+        except (TypeError, ValueError):
+            return fallback
+
+    @property
+    def classification_metrics_data(self):
+        return self._decode_json(self.classification_metrics, {})
+
+    @property
+    def regression_metrics_data(self):
+        return self._decode_json(self.regression_metrics, {})
+
+    @property
+    def confusion_matrix_data(self):
+        return self._decode_json(self.confusion_matrix, [])
+
+    @property
+    def artifact_hashes_data(self):
+        return self._decode_json(self.artifact_hashes, {})
+
+
 class ModelMetadata(db.Model):
     """Singleton record identifying the currently active XGBoost artifacts."""
 
@@ -129,3 +169,6 @@ class ModelMetadata(db.Model):
     model_version = db.Column(db.String(20), nullable=False)
     last_training_date = db.Column(db.DateTime, nullable=True)
     training_dataset_signature = db.Column(db.String(64), nullable=True)
+    active_version_id = db.Column(db.Integer, db.ForeignKey("model_versions.id"), nullable=True)
+
+    active_version = db.relationship("ModelVersion", foreign_keys=[active_version_id])
