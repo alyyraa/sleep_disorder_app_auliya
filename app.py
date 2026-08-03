@@ -17,14 +17,17 @@ from routes.master_data import master_data_bp
 from routes.prediction import prediction_bp
 from routes.reports import reports_bp
 from routes.users import users_bp
+from services.database_migration import ensure_database_schema
 from services.database_seed import seed_database
-from services.training_service import train_models_from_database
+from services.training_service import train_models_from_database, training_dataset_signature
 from utils.access import admin_required
 from utils.timezone import jakarta_now
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "sleep-disorder-xgboost-app-2024")
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{Path(app.root_path) / 'sleep_disorder.db'}"
+database_path = Path(os.environ.get("DATABASE_PATH", Path(app.root_path) / "sleep_disorder.db")).expanduser().resolve()
+database_path.parent.mkdir(parents=True, exist_ok=True)
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{database_path.as_posix()}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
@@ -45,7 +48,9 @@ def load_user(user_id):
 
 with app.app_context():
     db.create_all()
+    ensure_database_schema()
     seed_database()
+    ensure_database_schema()
 
 # Global predictor instance
 predictor = None
@@ -93,7 +98,7 @@ def predict():
             pred = get_predictor()
             
             if not pred.classifier and not pred.regressor:
-                return render_template('predict.html', error="Model belum dilatih! Silakan latih model terlebih dahulu di halaman Evaluasi Model.")
+                return render_template('predict.html', error="The model is not trained yet. Please train the model first.")
             
             results = pred.make_comprehensive_prediction(input_data)
             
@@ -103,7 +108,7 @@ def predict():
             return render_template('result.html', results=results, input_data=input_data)
             
         except Exception as e:
-            return render_template('predict.html', error=f"Terjadi kesalahan: {str(e)}")
+            return render_template('predict.html', error=f"An error occurred: {str(e)}")
     
     return render_template('predict.html')
 
@@ -121,6 +126,16 @@ def train():
     
     if request.method == 'POST':
         try:
+            current_dataset_signature = training_dataset_signature()
+            if model_metadata and model_metadata.training_dataset_signature == current_dataset_signature:
+                error = "The Training Dataset has not changed since the last successful training. The active model version was kept."
+                return render_template('train.html',
+                                     classification_results=classification_results,
+                                     regression_results=regression_results,
+                                     trained=trained,
+                                     error=error,
+                                     model_metadata=model_metadata,
+                                     training_record_count=training_record_count)
             (trainer, clf_results, reg_results), training_record_count = train_models_from_database()
             if trainer is not None and clf_results is not None and reg_results is not None:
                 classification_results = clf_results
@@ -141,6 +156,7 @@ def train():
                 else:
                     model_metadata.model_version = next_version
                 model_metadata.last_training_date = jakarta_now()
+                model_metadata.training_dataset_signature = current_dataset_signature
                 db.session.commit()
                 global predictor
                 predictor = None

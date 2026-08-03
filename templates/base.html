@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Sleep Stress Predictor{% endblock %}</title>
@@ -22,7 +22,7 @@
         <a class="nav-link" href="{{ url_for('master_data.bmi_categories') }}"><i class="bi bi-clipboard-data me-2"></i>BMI Categories</a>
       </div>
       <div class="nav-label">Machine Learning</div><div class="submenu">
-        <a class="nav-link" href="{{ url_for('train') }}"><i class="bi bi-cpu-fill me-2"></i>Train Model</a>
+        {% if current_user.role == 'Admin' %}<a class="nav-link" href="{{ url_for('train') }}"><i class="bi bi-cpu-fill me-2"></i>Train Model</a>{% endif %}
         <a class="nav-link" href="{{ url_for('prediction.new_prediction') }}"><i class="bi bi-cpu me-2"></i>New Prediction</a>
         <a class="nav-link" href="{{ url_for('prediction.history') }}"><i class="bi bi-clock-history me-2"></i>Prediction History</a>
       </div>
@@ -35,7 +35,7 @@
   <main class="app-main">
     <header class="app-topbar d-flex justify-content-between align-items-center px-4">
       <div><h5 class="mb-0 fw-bold">{% block page_title %}Sleep Stress Predictor{% endblock %}</h5><small class="text-secondary">{% block page_subtitle %}{% endblock %}</small></div>
-      <div class="d-flex align-items-center gap-2"><span class="user-avatar"><i class="bi bi-person"></i></span><div class="small"><strong class="d-block">{{ current_user.full_name }}</strong><span class="text-secondary">{{ current_user.role }}</span></div></div>
+      <div class="d-flex align-items-center gap-2"><span class="user-avatar"><i class="bi bi-person"></i></span><div class="small"><strong class="d-block">{{ current_user.full_name }}</strong><span class="text-secondary">{{ 'Administrator' if current_user.role == 'Admin' else 'Employee' }}</span></div></div>
     </header>
     <section class="page-content">
       {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>{% endfor %}{% endwith %}

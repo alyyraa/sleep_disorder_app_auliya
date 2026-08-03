@@ -15,12 +15,12 @@ users_bp = Blueprint("users", __name__, url_prefix="/users")
 def _validated_user_form(user=None):
     full_name = request.form.get("full_name", "").strip()
     username = request.form.get("username", "").strip()
-    role = request.form.get("role", "Staff")
+    role = request.form.get("role", "Employee")
     password = request.form.get("password", "")
 
     if not full_name or not username:
         return None, "Full name and username are required."
-    if role not in {"Admin", "Staff"}:
+    if role not in {"Admin", "Employee", "Staff"}:
         return None, "Invalid user role."
     if user is None and len(password) < 6:
         return None, "Password must contain at least 6 characters."

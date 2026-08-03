@@ -4,7 +4,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
-from utils.timezone import jakarta_now
+from utils.timezone import format_indonesian_date, jakarta_now
 
 BLUE = "0B3A75"
 
@@ -19,7 +19,7 @@ def build_excel(report_data, output):
     title_cell.font = Font(bold=True, size=14, color=BLUE)
     title_cell.alignment = Alignment(horizontal="center")
     sheet.merge_cells(start_row=2, start_column=1, end_row=2, end_column=column_count)
-    sheet.cell(2, 1, f"Print Date: {jakarta_now().strftime('%d %b %Y, %H:%M WIB')} | Total Records: {report_data['total_records']}").alignment = Alignment(horizontal="center")
+    sheet.cell(2, 1, f"Tanggal Cetak: {format_indonesian_date(jakarta_now(), include_time=True)} | Total Data: {report_data['total_records']}").alignment = Alignment(horizontal="center")
     row_index = 4
     if report_data["summary"]:
         for label, value in report_data["summary"]:

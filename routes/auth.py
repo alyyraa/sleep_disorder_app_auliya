@@ -30,13 +30,13 @@ def login():
 
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
-            flash("Login berhasil. Selamat datang!", "success")
+            flash("Login successful. Welcome back!", "success")
             next_page = request.args.get("next")
             if next_page and _is_safe_redirect_url(next_page):
                 return redirect(next_page)
             return redirect(url_for("system.dashboard"))
 
-        flash("Username atau password tidak valid.", "danger")
+        flash("Invalid username or password.", "danger")
 
     return render_template("auth/login.html")
 
@@ -44,5 +44,5 @@ def login():
 @auth_bp.post("/logout")
 def logout():
     logout_user()
-    flash("Anda telah logout.", "info")
+    flash("You have been logged out.", "info")
     return redirect(url_for("auth.login"))

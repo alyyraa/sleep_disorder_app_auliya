@@ -21,12 +21,16 @@ RUN pip install gunicorn
 # Menyalin seluruh kode aplikasi ke dalam container
 COPY . .
 
+RUN chmod +x /app/docker-entrypoint.sh
+
 # Mengekspos port 5000 untuk Flask
 EXPOSE 5000
 
 # Menyiapkan environment variable
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
+
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
 # Menjalankan aplikasi menggunakan Gunicorn untuk lingkungan production
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]

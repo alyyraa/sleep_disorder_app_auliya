@@ -1,5 +1,7 @@
 """Patient-based prediction and prediction-history routes."""
 
+import json
+
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import login_required
 from sqlalchemy.orm import joinedload
@@ -7,6 +9,7 @@ from sqlalchemy.orm import joinedload
 from extensions import db
 from models.database import ModelMetadata, Patient, PredictionHistory
 from services.prediction_service import get_feature_importance, predict_patient
+from services.patient_snapshot_service import patient_snapshot
 from utils.timezone import jakarta_now
 
 prediction_bp = Blueprint("prediction", __name__, url_prefix="/prediction")
@@ -38,6 +41,7 @@ def new_prediction():
                     recommendation="\n".join(results.get("recommendations") or []),
                     model_version=metadata.model_version if metadata else "v1",
                     prediction_date=jakarta_now(),
+                    patient_snapshot=json.dumps(patient_snapshot(patient)),
                 )
                 db.session.add(history)
                 db.session.commit()
@@ -74,6 +78,7 @@ def detail(history_id):
         "prediction/detail.html",
         record=record,
         feature_importance=get_feature_importance(),
+        snapshot=record.patient_snapshot_data or patient_snapshot(record.patient),
     )
 
 

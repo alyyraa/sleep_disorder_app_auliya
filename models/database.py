@@ -1,5 +1,7 @@
 """Database entities for the administrative information system."""
 
+import json
+
 from flask_login import UserMixin
 
 from extensions import db
@@ -103,8 +105,18 @@ class PredictionHistory(db.Model):
     recommendation = db.Column(db.Text, nullable=True)
     model_version = db.Column(db.String(20), nullable=False)
     prediction_date = db.Column(db.DateTime, nullable=False, default=jakarta_now, index=True)
+    patient_snapshot = db.Column(db.Text, nullable=True)
 
     patient = db.relationship("Patient", back_populates="prediction_history")
+
+    @property
+    def patient_snapshot_data(self):
+        if not self.patient_snapshot:
+            return {}
+        try:
+            return json.loads(self.patient_snapshot)
+        except (TypeError, ValueError):
+            return {}
 
 
 class ModelMetadata(db.Model):
@@ -116,3 +128,4 @@ class ModelMetadata(db.Model):
     active_model = db.Column(db.String(150), nullable=False)
     model_version = db.Column(db.String(20), nullable=False)
     last_training_date = db.Column(db.DateTime, nullable=True)
+    training_dataset_signature = db.Column(db.String(64), nullable=True)
