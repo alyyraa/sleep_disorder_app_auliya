@@ -14,7 +14,11 @@
   {% block extra_head %}{% endblock %}
 </head>
 <body class="dashboard-body">
-  <aside class="app-sidebar">
+  <aside class="app-sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="appSidebar" aria-labelledby="appSidebarLabel">
+    <div class="offcanvas-header d-lg-none">
+      <span class="text-white fw-bold" id="appSidebarLabel">Navigation</span>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#appSidebar" aria-label="Close navigation"></button>
+    </div>
     <a class="sidebar-brand" href="{{ url_for('system.dashboard') }}"><img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Sleep Stress Predictor" class="sidebar-logo"></a>
     <nav class="sidebar-nav nav flex-column">
       <a class="nav-link {% if request.endpoint == 'system.dashboard' %}active{% endif %}" href="{{ url_for('system.dashboard') }}"><i class="bi bi-grid-1x2 me-2"></i>Dashboard</a>
@@ -36,9 +40,12 @@
     </nav>
   </aside>
   <main class="app-main">
-    <header class="app-topbar d-flex justify-content-between align-items-center px-4">
-      <div><h5 class="mb-0 fw-bold">{% block page_title %}Sleep Stress Predictor{% endblock %}</h5><small class="text-secondary">{% block page_subtitle %}{% endblock %}</small></div>
-      <div class="d-flex align-items-center gap-2"><span class="user-avatar"><i class="bi bi-person"></i></span><div class="small"><strong class="d-block">{{ current_user.full_name }}</strong><span class="text-secondary">{{ 'Administrator' if current_user.role == 'Admin' else 'Employee' }}</span></div></div>
+    <header class="app-topbar d-flex justify-content-between align-items-center px-3 px-lg-4">
+      <div class="d-flex align-items-center gap-2 gap-sm-3 page-heading">
+        <button class="btn btn-outline-primary sidebar-toggle d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#appSidebar" aria-controls="appSidebar" aria-label="Open navigation"><i class="bi bi-list fs-5"></i></button>
+        <div class="page-heading-text"><h5 class="mb-0 fw-bold text-truncate">{% block page_title %}Sleep Stress Predictor{% endblock %}</h5><small class="text-secondary d-block text-truncate">{% block page_subtitle %}{% endblock %}</small></div>
+      </div>
+      <div class="d-flex align-items-center gap-2 flex-shrink-0"><span class="user-avatar"><i class="bi bi-person"></i></span><div class="small d-none d-sm-block"><strong class="d-block text-truncate user-name">{{ current_user.full_name }}</strong><span class="text-secondary">{{ 'Administrator' if current_user.role == 'Admin' else 'Employee' }}</span></div></div>
     </header>
     <section class="page-content">
       {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>{% endfor %}{% endwith %}

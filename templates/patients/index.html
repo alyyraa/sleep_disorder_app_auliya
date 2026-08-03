@@ -5,7 +5,7 @@
 {% block content %}
 <div class="card border-0 dashboard-card">
   <div class="card-body p-4">
-    <div class="d-flex justify-content-end mb-3">
+    <div class="responsive-toolbar justify-content-end mb-3">
       <a class="btn btn-primary" href="{{ url_for('master_data.patient_create') }}"><i class="bi bi-person-plus me-2"></i>Add Patient</a>
     </div>
     <div class="table-responsive">
@@ -43,10 +43,12 @@
             <td>{{ patient.systolic_bp }}/{{ patient.diastolic_bp }} mmHg</td>
             <td>{{ patient.created_at.strftime('%d %b %Y') }}</td>
             <td class="text-end text-nowrap">
-              <a class="btn btn-sm btn-outline-primary" href="{{ url_for('master_data.patient_edit', patient_id=patient.id) }}">Edit</a>
-              <form method="post" class="d-inline" action="{{ url_for('master_data.patient_delete', patient_id=patient.id) }}" onsubmit="return confirm('Delete this patient?');">
-                <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-              </form>
+              <div class="action-buttons">
+                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('master_data.patient_edit', patient_id=patient.id) }}">Edit</a>
+                <form method="post" class="d-inline" action="{{ url_for('master_data.patient_delete', patient_id=patient.id) }}" onsubmit="return confirm('Delete this patient?');">
+                  <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                </form>
+              </div>
             </td>
           </tr>
           {% endfor %}
@@ -61,6 +63,8 @@
 $(function () {
   $('.data-table').DataTable({
     pageLength: 10,
+    autoWidth: false,
+    scrollCollapse: true,
     scrollX: true
   });
 });

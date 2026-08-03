@@ -17,7 +17,7 @@
   <div class="col-lg-8">
     <div class="card border-0 dashboard-card h-100">
       <div class="card-body p-4">
-        <div class="d-flex justify-content-between align-items-center mb-4 gap-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap mb-4 gap-3">
           <h5 class="fw-bold mb-0"><i class="bi bi-cpu-fill text-primary me-2"></i>Current Model</h5>
           <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Sleep Stress Predictor" class="train-logo">
         </div>
@@ -47,7 +47,7 @@
 </div>
 
 {% if classification_results and regression_results %}
-<div class="d-flex align-items-center justify-content-between mb-3">
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
   <h5 class="fw-bold mb-0">Active Model Evaluation</h5>
   {% if active_version %}<span class="badge text-bg-primary">{{ active_version.version }}</span>{% endif %}
 </div>
@@ -89,12 +89,12 @@
 
 <div class="card border-0 dashboard-card">
   <div class="card-body p-4">
-    <div class="d-flex align-items-center justify-content-between mb-3">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
       <div><h5 class="fw-bold mb-1">Available Model Versions</h5><p class="text-secondary small mb-0">Activate an archived artifact bundle without retraining or changing the Training Dataset.</p></div>
       <span class="badge text-bg-light">{{ model_versions|length }} versions</span>
     </div>
     <div class="table-responsive">
-      <table class="table align-middle mb-0">
+      <table class="table align-middle text-nowrap mb-0">
         <thead><tr><th>Version</th><th>Training Date</th><th>Records</th><th>Accuracy</th><th>RMSE</th><th>Status</th><th class="text-end">Action</th></tr></thead>
         <tbody>
           {% for version in model_versions %}
