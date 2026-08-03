@@ -4,13 +4,13 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
-from utils.timezone import format_indonesian_date, jakarta_now
+from utils.timezone import format_indonesian_date, jakarta_now_aware
 
 BLUE = "0B3A75"
 
 
 def build_excel(report_data, output):
-    generated_at = report_data.get("generated_at") or jakarta_now()
+    generated_at = report_data.get("generated_at") or jakarta_now_aware()
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = report_data["title"][:31]

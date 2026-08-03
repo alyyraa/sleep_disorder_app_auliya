@@ -16,10 +16,17 @@ def jakarta_now():
     return datetime.now(JAKARTA_TZ).replace(tzinfo=None)
 
 
+def jakarta_now_aware():
+    """Return the current timezone-aware Asia/Jakarta time for exports."""
+    return datetime.now(JAKARTA_TZ)
+
+
 def format_indonesian_date(value, include_time=False):
     """Format a datetime using full Indonesian day and month names."""
     if value is None:
         return "-"
+    if value.tzinfo is not None:
+        value = value.astimezone(JAKARTA_TZ)
     formatted = (
         f"{INDONESIAN_DAYS[value.weekday()]}, {value.day:02d} "
         f"{INDONESIAN_MONTHS[value.month - 1]} {value.year}"

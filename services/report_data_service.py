@@ -7,7 +7,7 @@ from extensions import db
 from models.database import ModelMetadata, Patient, PredictionHistory, TrainingDatasetRecord
 from services.model_version_service import active_model_version
 from services.training_service import training_dataset_signature
-from utils.timezone import format_indonesian_date, jakarta_now
+from utils.timezone import format_indonesian_date, jakarta_now_aware
 
 
 def _format_date(value):
@@ -62,7 +62,7 @@ def _active_model_summary(context, include_print_date=False, generated_at=None):
         ("Status Dataset Saat Ini", context["dataset_status"]),
     ]
     if include_print_date:
-        summary.append(("Tanggal Cetak", _format_date(generated_at or jakarta_now())))
+        summary.append(("Tanggal Cetak", _format_date(generated_at or jakarta_now_aware())))
     return summary
 
 
@@ -77,7 +77,7 @@ def report_dashboard_cards():
     ]
 
 
-def training_dataset_report():
+def training_dataset_report(generated_at=None):
     context = _active_model_report_context()
     records = TrainingDatasetRecord.query.options(joinedload(TrainingDatasetRecord.occupation), joinedload(TrainingDatasetRecord.bmi_category)).order_by(TrainingDatasetRecord.id).all()
     headers = ["ID Responden", "Jenis Kelamin", "Usia", "Pekerjaan", "Durasi Tidur", "Kualitas Tidur", "Tingkat Aktivitas Fisik", "Tingkat Stres", "Kategori BMI", "Tekanan Darah", "Detak Jantung", "Langkah Harian", "Gangguan Tidur"]
@@ -85,14 +85,15 @@ def training_dataset_report():
     return {"title": "Laporan Dataset Pelatihan", "headers": headers, "rows": rows, "total_records": len(records), "summary": _active_model_summary(context)}
 
 
-def patient_report():
+def patient_report(generated_at=None):
     records = Patient.query.options(joinedload(Patient.occupation), joinedload(Patient.bmi_category)).order_by(Patient.full_name).all()
     headers = ["Nama Pasien", "Jenis Kelamin", "Usia", "Pekerjaan", "Durasi Tidur", "Kualitas Tidur", "Tingkat Aktivitas Fisik", "Langkah Harian", "Kategori BMI", "Detak Jantung", "Tekanan Darah", "Tanggal Dibuat"]
     rows = [[record.full_name, record.gender, record.age, record.occupation.name, record.sleep_duration, record.quality_of_sleep, record.physical_activity_level, record.daily_steps, record.bmi_category.name, record.heart_rate, f"{record.systolic_bp}/{record.diastolic_bp}", _format_date(record.created_at)] for record in records]
     return {"title": "Laporan Data Pasien", "headers": headers, "rows": rows, "total_records": len(records), "summary": None}
 
 
-def prediction_history_report():
+def prediction_history_report(generated_at=None):
+    generated_at = generated_at or jakarta_now_aware()
     records = PredictionHistory.query.options(joinedload(PredictionHistory.patient)).order_by(PredictionHistory.prediction_date.desc()).all()
     active_version = active_model_version(db.session.get(ModelMetadata, 1))
     headers = ["Tanggal Prediksi", "Nama Pasien", "Gangguan Tidur", "Probabilitas Gangguan Tidur (%)", "Tingkat Stres", "Versi Model"]
@@ -105,13 +106,13 @@ def prediction_history_report():
         ("Total Tidak Ada Gangguan", sum(record.sleep_disorder == "None" for record in records)),
         ("Rata-rata Tingkat Stres", f"{sum(stress_values) / len(stress_values):.1f}" if stress_values else "-"),
         ("Versi Model Saat Ini", active_version.version if active_version else "-"),
-        ("Tanggal Cetak", _format_date(jakarta_now())),
+        ("Tanggal Cetak", _format_date(generated_at)),
     ]
     return {"title": "Laporan Riwayat Prediksi", "headers": headers, "rows": rows, "total_records": len(records), "summary": summary}
 
 
-def model_performance_report():
-    generated_at = jakarta_now()
+def model_performance_report(generated_at=None):
+    generated_at = generated_at or jakarta_now_aware()
     context = _active_model_report_context()
     summary = _active_model_summary(context, include_print_date=True, generated_at=generated_at)
     return {
@@ -134,6 +135,9 @@ REPORT_BUILDERS = {
 
 def get_report_data(report_key):
     try:
-        return REPORT_BUILDERS[report_key]()
+        generated_at = jakarta_now_aware()
+        report_data = REPORT_BUILDERS[report_key](generated_at=generated_at)
+        report_data["generated_at"] = generated_at
+        return report_data
     except KeyError as error:
         raise ValueError("Unknown report type.") from error
