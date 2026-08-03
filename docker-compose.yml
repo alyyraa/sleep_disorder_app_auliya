@@ -13,6 +13,7 @@ services:
       - FLASK_APP=app.py
       - FLASK_ENV=production
       - DATABASE_PATH=/data/sleep_disorder.db
+      - ACTIVE_MODEL_VERSION=v9
     restart: unless-stopped
 
 volumes:

@@ -20,6 +20,7 @@ from routes.users import users_bp
 from services.database_migration import ensure_database_schema
 from services.database_seed import seed_database
 from services.model_version_service import (
+    activate_configured_model_version,
     activate_model_version,
     active_model_version,
     available_model_versions,
@@ -60,6 +61,7 @@ with app.app_context():
     seed_database()
     ensure_database_schema()
     ensure_active_model_version()
+    activate_configured_model_version()
 
 # Global predictor instance
 predictor = None

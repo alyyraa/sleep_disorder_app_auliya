@@ -6,6 +6,7 @@ import os
 import shutil
 import tempfile
 import threading
+from datetime import datetime
 from pathlib import Path
 
 import joblib
@@ -303,6 +304,58 @@ def ensure_active_model_version():
         if archive_created:
             shutil.rmtree(artifact_directory, ignore_errors=True)
         raise
+
+
+def register_archived_model_version(version_name):
+    """Register a bundled version manifest without retraining the model."""
+    existing = ModelVersion.query.filter_by(version=version_name).first()
+    if existing is not None:
+        return existing, False
+
+    artifact_directory = VERSION_ROOT / version_name
+    manifest_path = artifact_directory / "manifest.json"
+    if not manifest_path.is_file():
+        raise FileNotFoundError(f"Model version manifest was not found for {version_name}.")
+
+    with manifest_path.open("r", encoding="utf-8") as manifest_file:
+        manifest = json.load(manifest_file)
+
+    if manifest.get("version") != version_name:
+        raise ValueError(f"Model version manifest does not match {version_name}.")
+
+    expected_hashes = manifest.get("artifact_hashes")
+    hashes = _validate_bundle(artifact_directory, expected_hashes)
+    version = ModelVersion(
+        version=version_name,
+        training_date=datetime.fromisoformat(manifest["training_date"]),
+        training_dataset_signature=manifest["training_dataset_signature"],
+        training_record_count=int(manifest["training_record_count"]),
+        classification_metrics=_json_dump(manifest["classification_metrics"]),
+        regression_metrics=_json_dump(manifest["regression_metrics"]),
+        confusion_matrix=_json_dump(manifest["confusion_matrix"]),
+        artifact_path=_stored_artifact_path(artifact_directory),
+        artifact_hashes=_json_dump(hashes),
+    )
+    try:
+        db.session.add(version)
+        db.session.commit()
+        return version, True
+    except Exception:
+        db.session.rollback()
+        existing = ModelVersion.query.filter_by(version=version_name).first()
+        if existing is not None:
+            return existing, False
+        raise
+
+
+def activate_configured_model_version():
+    """Register and activate the version requested by deployment configuration."""
+    version_name = os.environ.get("ACTIVE_MODEL_VERSION", "").strip()
+    if not version_name:
+        return None, False
+
+    version, _ = register_archived_model_version(version_name)
+    return activate_model_version(version.id)
 
 
 def active_model_version(metadata=None):

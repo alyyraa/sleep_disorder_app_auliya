@@ -29,6 +29,7 @@ EXPOSE 5000
 # Menyiapkan environment variable
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
+ENV ACTIVE_MODEL_VERSION=v9
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
