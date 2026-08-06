@@ -2,7 +2,7 @@ import sys
 import os
 from pathlib import Path
 from flask import Flask, flash, redirect, render_template, request, url_for
-from flask_login import current_user
+from flask_login import current_user, login_required
 
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent))
@@ -31,7 +31,7 @@ from services.model_version_service import (
 )
 from services.prediction_service import reset_predictor_cache
 from services.training_service import training_dataset_signature
-from utils.access import admin_required
+from utils.access import role_home_endpoint
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "sleep-disorder-xgboost-app-2024")
@@ -83,7 +83,7 @@ def get_predictor():
 def index():
     """Route visitors into the authenticated information system."""
     if current_user.is_authenticated:
-        return redirect(url_for("system.dashboard"))
+        return redirect(url_for(role_home_endpoint(current_user)))
     return redirect(url_for("auth.login"))
 
 
@@ -129,7 +129,7 @@ def predict():
 
 
 @app.route('/train', methods=['GET', 'POST'])
-@admin_required
+@login_required
 def train():
     """Model training and evaluation metrics page"""
     trained = False
@@ -185,7 +185,7 @@ def train():
 
 
 @app.post('/train/versions/<int:version_id>/activate')
-@admin_required
+@login_required
 def activate_trained_model(version_id):
     """Restore an archived model and its exact Training Dataset without retraining."""
     try:

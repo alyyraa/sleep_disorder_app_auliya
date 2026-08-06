@@ -7,6 +7,7 @@ from flask_login import current_user, login_user, logout_user
 from werkzeug.security import check_password_hash
 
 from models.database import User
+from utils.access import role_home_endpoint
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -21,7 +22,7 @@ def _is_safe_redirect_url(target):
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for("system.dashboard"))
+        return redirect(url_for(role_home_endpoint(current_user)))
 
     if request.method == "POST":
         username = request.form.get("username", "").strip()
@@ -34,7 +35,7 @@ def login():
             next_page = request.args.get("next")
             if next_page and _is_safe_redirect_url(next_page):
                 return redirect(next_page)
-            return redirect(url_for("system.dashboard"))
+            return redirect(url_for(role_home_endpoint(user)))
 
         flash("Invalid username or password.", "danger")
 

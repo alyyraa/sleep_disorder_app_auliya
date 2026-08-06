@@ -4,10 +4,10 @@ import io
 
 import pandas as pd
 from flask import Blueprint, flash, redirect, render_template, request, url_for
-from flask_login import login_required
 
 from extensions import db
 from models.database import BmiCategory, Occupation, TrainingDatasetRecord
+from utils.access import admin_required
 
 training_dataset_bp = Blueprint("training_dataset", __name__, url_prefix="/master-data/training-dataset")
 
@@ -39,14 +39,14 @@ def _record_values(source=None):
 
 
 @training_dataset_bp.get("/")
-@login_required
+@admin_required
 def index():
     records = TrainingDatasetRecord.query.order_by(TrainingDatasetRecord.id.desc()).all()
     return render_template("training_dataset/index.html", records=records)
 
 
 @training_dataset_bp.route("/create", methods=["GET", "POST"])
-@login_required
+@admin_required
 def create():
     occupations, bmi_categories = _choices()
     if request.method == "POST":
@@ -59,7 +59,7 @@ def create():
 
 
 @training_dataset_bp.route("/<int:record_id>/edit", methods=["GET", "POST"])
-@login_required
+@admin_required
 def edit(record_id):
     record = db.get_or_404(TrainingDatasetRecord, record_id); occupations, bmi_categories = _choices()
     if request.method == "POST":
@@ -73,14 +73,14 @@ def edit(record_id):
 
 
 @training_dataset_bp.post("/<int:record_id>/delete")
-@login_required
+@admin_required
 def delete(record_id):
     db.session.delete(db.get_or_404(TrainingDatasetRecord, record_id)); db.session.commit(); flash("Training Dataset record deleted successfully.", "success")
     return redirect(url_for("training_dataset.index"))
 
 
 @training_dataset_bp.post("/import")
-@login_required
+@admin_required
 def import_csv():
     uploaded_file = request.files.get("csv_file")
     if not uploaded_file or not uploaded_file.filename.lower().endswith(".csv"):

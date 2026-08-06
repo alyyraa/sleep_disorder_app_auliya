@@ -16,3 +16,8 @@ def admin_required(view):
         return view(*args, **kwargs)
 
     return wrapped_view
+
+
+def role_home_endpoint(user):
+    """Return the first permitted page for the authenticated user's role."""
+    return "system.dashboard" if user.role == "Admin" else "prediction.new_prediction"

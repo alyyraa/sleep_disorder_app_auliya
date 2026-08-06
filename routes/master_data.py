@@ -1,12 +1,12 @@
 """CRUD routes for Patients, Occupations, and BMI Categories."""
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
-from flask_login import login_required
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 
 from extensions import db
 from models.database import BmiCategory, Occupation, Patient
+from utils.access import admin_required
 
 master_data_bp = Blueprint("master_data", __name__, url_prefix="/master-data")
 
@@ -28,13 +28,13 @@ def _patient_values():
 
 
 @master_data_bp.get("/patients")
-@login_required
+@admin_required
 def patients():
     return render_template("patients/index.html", patients=Patient.query.order_by(Patient.created_at.desc()).all())
 
 
 @master_data_bp.route("/patients/create", methods=["GET", "POST"])
-@login_required
+@admin_required
 def patient_create():
     if request.method == "POST":
         values, error = _patient_values()
@@ -47,7 +47,7 @@ def patient_create():
 
 
 @master_data_bp.route("/patients/<int:patient_id>/edit", methods=["GET", "POST"])
-@login_required
+@admin_required
 def patient_edit(patient_id):
     patient = db.get_or_404(Patient, patient_id)
     if request.method == "POST":
@@ -62,7 +62,7 @@ def patient_edit(patient_id):
 
 
 @master_data_bp.post("/patients/<int:patient_id>/delete")
-@login_required
+@admin_required
 def patient_delete(patient_id):
     db.session.delete(db.get_or_404(Patient, patient_id)); db.session.commit(); flash("Patient deleted successfully.", "success")
     return redirect(url_for("master_data.patients"))
@@ -95,10 +95,10 @@ def _master_routes(model, label, endpoint_prefix):
             db.session.rollback(); flash(f"{label} cannot be deleted because it is in use.", "danger")
         return redirect(url_for(f"master_data.{endpoint_prefix}"))
     list_view.__name__, create_view.__name__, edit_view.__name__, delete_view.__name__ = endpoint_prefix, f"{endpoint_prefix}_create", f"{endpoint_prefix}_edit", f"{endpoint_prefix}_delete"
-    master_data_bp.add_url_rule(f"/{endpoint_prefix}", view_func=login_required(list_view))
-    master_data_bp.add_url_rule(f"/{endpoint_prefix}/create", view_func=login_required(create_view), methods=["GET", "POST"])
-    master_data_bp.add_url_rule(f"/{endpoint_prefix}/<int:item_id>/edit", view_func=login_required(edit_view), methods=["GET", "POST"])
-    master_data_bp.add_url_rule(f"/{endpoint_prefix}/<int:item_id>/delete", view_func=login_required(delete_view), methods=["POST"])
+    master_data_bp.add_url_rule(f"/{endpoint_prefix}", view_func=admin_required(list_view))
+    master_data_bp.add_url_rule(f"/{endpoint_prefix}/create", view_func=admin_required(create_view), methods=["GET", "POST"])
+    master_data_bp.add_url_rule(f"/{endpoint_prefix}/<int:item_id>/edit", view_func=admin_required(edit_view), methods=["GET", "POST"])
+    master_data_bp.add_url_rule(f"/{endpoint_prefix}/<int:item_id>/delete", view_func=admin_required(delete_view), methods=["POST"])
 
 
 _master_routes(Occupation, "Occupation", "occupations")

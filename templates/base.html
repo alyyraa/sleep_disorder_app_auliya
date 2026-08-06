@@ -20,8 +20,9 @@
       <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close navigation"></button>
     </div>
     <div class="offcanvas-body d-flex flex-column p-0">
-      <a class="sidebar-brand flex-shrink-0" href="{{ url_for('system.dashboard') }}"><img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Sleep Stress Predictor" class="sidebar-logo"></a>
+      <a class="sidebar-brand flex-shrink-0" href="{{ url_for('system.dashboard') if current_user.role == 'Admin' else url_for('prediction.new_prediction') }}"><img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Sleep Stress Predictor" class="sidebar-logo"></a>
       <nav class="sidebar-nav nav flex-column flex-nowrap">
+      {% if current_user.role == 'Admin' %}
       <a class="nav-link {% if request.endpoint == 'system.dashboard' %}active{% endif %}" href="{{ url_for('system.dashboard') }}"><i class="bi bi-grid-1x2 me-2"></i>Dashboard</a>
       <div class="nav-label">Master Data</div><div class="submenu">
         <a class="nav-link" href="{{ url_for('training_dataset.index') }}"><i class="bi bi-database me-2"></i>Training Dataset</a>
@@ -29,8 +30,9 @@
         <a class="nav-link" href="{{ url_for('master_data.occupations') }}"><i class="bi bi-briefcase me-2"></i>Occupations</a>
         <a class="nav-link" href="{{ url_for('master_data.bmi_categories') }}"><i class="bi bi-clipboard-data me-2"></i>BMI Categories</a>
       </div>
+      {% endif %}
       <div class="nav-label">Machine Learning</div><div class="submenu">
-        {% if current_user.role == 'Admin' %}<a class="nav-link" href="{{ url_for('train') }}"><i class="bi bi-cpu-fill me-2"></i>Train Model</a>{% endif %}
+        <a class="nav-link" href="{{ url_for('train') }}"><i class="bi bi-cpu-fill me-2"></i>Train Model</a>
         <a class="nav-link" href="{{ url_for('prediction.new_prediction') }}"><i class="bi bi-cpu me-2"></i>New Prediction</a>
         <a class="nav-link" href="{{ url_for('prediction.history') }}"><i class="bi bi-clock-history me-2"></i>Prediction History</a>
       </div>

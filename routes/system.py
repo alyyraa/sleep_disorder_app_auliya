@@ -1,18 +1,18 @@
 """Authenticated information-system shell and Phase 2 module placeholders."""
 
 from flask import Blueprint, render_template
-from flask_login import login_required
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 
 from extensions import db
 from models.database import ModelMetadata, Patient, PredictionHistory, TrainingDatasetRecord
+from utils.access import admin_required
 
 system_bp = Blueprint("system", __name__)
 
 
 @system_bp.get("/dashboard")
-@login_required
+@admin_required
 def dashboard():
     total_predictions = PredictionHistory.query.count()
     average_stress = db.session.query(func.avg(PredictionHistory.stress_level)).scalar()
@@ -71,6 +71,6 @@ def pending_module(title, message):
 
 
 @system_bp.get("/about")
-@login_required
+@admin_required
 def about():
     return render_template("about.html")
